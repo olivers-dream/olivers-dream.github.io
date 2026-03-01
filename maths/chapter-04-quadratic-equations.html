@@ -33,6 +33,20 @@
     <section class="card quote-card" style="margin-top:16px;">
       <span class="quote-text">💬 The secret of getting ahead is getting started.</span>
     </section>
+    <section class="card" style="margin-top:16px;">
+      <h3>📋 Daily 2-3 Hour Chapter Routine</h3>
+      <ul class="list">
+        <li><b>40 mins:</b> Read summary + rewrite key points in your own words.</li>
+        <li><b>35 mins:</b> Attempt worked examples (without opening steps).</li>
+        <li><b>30 mins:</b> Practice set from easy to hard.</li>
+        <li><b>15 mins:</b> Error log and one-page recall revision.</li>
+      </ul>
+      <div class="chapter-actions">
+        <button class="btn" id="markDone">✅ Mark Chapter Completed</button>
+        <button class="btn secondary" id="markUndo">⏳ Mark In Progress</button>
+      </div>
+      <p id="statusText" class="footer-note"></p>
+    </section>
 
     <section class="card">
       <h3>Book Chapter Summary (Easy Language)</h3>
@@ -257,20 +271,6 @@
         
     </section>
 
-    <section class="card" style="margin-top:16px;">
-      <h3>📋 Daily 2-3 Hour Chapter Routine</h3>
-      <ul class="list">
-        <li><b>40 mins:</b> Read summary + rewrite key points in your own words.</li>
-        <li><b>35 mins:</b> Attempt worked examples (without opening steps).</li>
-        <li><b>30 mins:</b> Practice set from easy to hard.</li>
-        <li><b>15 mins:</b> Error log and one-page recall revision.</li>
-      </ul>
-      <div class="chapter-actions">
-        <button class="btn" id="markDone">✅ Mark Chapter Completed</button>
-        <button class="btn secondary" id="markUndo">⏳ Mark In Progress</button>
-      </div>
-      <p id="statusText" class="footer-note"></p>
-    </section>
   </main>
 
   <script src="../assets/app.js"></script>
