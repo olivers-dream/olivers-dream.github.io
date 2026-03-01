@@ -80,15 +80,18 @@ a:hover { color: #22d3ee; }
 
 /* Wisdom quote banner */
 .wisdom-banner {
+  grid-column: 1 / -1;
   width: 100%;
   text-align: center;
-  padding: 10px 20px;
-  font-size: 0.88rem;
+  padding: 12px 20px;
+  font-size: 0.92rem;
   font-style: italic;
   letter-spacing: 0.04em;
   color: var(--text-muted);
-  background: linear-gradient(90deg, rgba(139,92,246,0.08) 0%, rgba(34,211,238,0.08) 50%, rgba(139,92,246,0.08) 100%);
-  border-bottom: 1px solid rgba(139,92,246,0.15);
+  background: linear-gradient(90deg, rgba(139,92,246,0.10) 0%, rgba(34,211,238,0.10) 50%, rgba(139,92,246,0.10) 100%);
+  border: 1px solid rgba(139,92,246,0.18);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
   position: relative;
   z-index: 5;
 }

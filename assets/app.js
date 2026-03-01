@@ -5,11 +5,14 @@
   const banner = document.createElement('div');
   banner.className = 'wisdom-banner';
   banner.innerHTML = '\u201CThe fear of the Lord is the beginning of wisdom\u201D <span class="wisdom-ref">\u2014 Prov 9:10</span>';
-  const header = document.querySelector('header.header');
-  if (header && header.nextElementSibling) {
-    header.parentNode.insertBefore(banner, header.nextElementSibling);
+  const main = document.querySelector('main.container');
+  if (main) {
+    main.insertBefore(banner, main.firstChild);
   } else {
-    document.body.insertBefore(banner, document.body.firstChild);
+    const header = document.querySelector('header.header');
+    if (header && header.nextElementSibling) {
+      header.parentNode.insertBefore(banner, header.nextElementSibling);
+    }
   }
 })();
 
