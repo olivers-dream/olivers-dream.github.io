@@ -78,6 +78,27 @@ a:hover { color: #22d3ee; }
   min-height: 72px;
 }
 
+/* Wisdom quote banner */
+.wisdom-banner {
+  width: 100%;
+  text-align: center;
+  padding: 10px 20px;
+  font-size: 0.88rem;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  background: linear-gradient(90deg, rgba(139,92,246,0.08) 0%, rgba(34,211,238,0.08) 50%, rgba(139,92,246,0.08) 100%);
+  border-bottom: 1px solid rgba(139,92,246,0.15);
+  position: relative;
+  z-index: 5;
+}
+.wisdom-banner .wisdom-ref {
+  color: #c084fc;
+  font-weight: 600;
+  font-style: normal;
+  margin-left: 4px;
+}
+
 /* Brand bar (logo + name + motto, left-aligned) */
 .brand-bar {
   position: absolute;
