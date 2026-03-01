@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📅 Schedule — Oliver's Dream</title>
+  <link rel="stylesheet" href="assets/styles.css"/>
+</head>
+<body>
+
+  <header class="header">
+    <a href="index.html" class="brand-bar"><img src="assets/logo.svg" alt="Oliver's Dream" class="site-logo"><div class="brand-text"><span class="brand-name">Oliver's Dream</span><span class="brand-motto">The road less travelled</span></div></a>
+    <h1>📅 Master Schedule</h1>
+    <p>Weekdays only · 2–3 hrs/day · March 16, 2026 → February 2027</p>
+  </header>
+
+  <main class="container">
+    <div class="top-tabs">
+      <a href="index.html">🏠 Dashboard</a>
+      <a href="schedule.html" class="active">📅 Schedule</a>
+      <a href="tracker.html">✏️ Tracker</a>
+    </div>
+    <nav class="nav">
+      <a href="maths/index.html">📐 Maths</a>
+      <a href="science/index.html">🔬 Science</a>
+      <a href="geography/index.html">🌍 Geography</a>
+      <a href="civics/index.html">🏛️ Civics</a>
+      <a href="history/index.html">📜 History</a>
+      <a href="economics/index.html">💰 Economics</a>
+      <a href="first_flight/index.html">📖 First Flight</a>
+      <a href="footprints/index.html">👣 Footprints</a>
+      <a href="words_expressions/index.html">✍️ Words &amp; Expressions</a>
+    </nav>
+
+    <section class="card" style="margin-bottom:16px;">
+      <h3>🗺️ Four Phases</h3>
+      <ul class="list">
+        <li><strong>Phase 1 (Mar–Sep):</strong> Build concepts — complete all core chapters with examples &amp; practice</li>
+        <li><strong>Phase 2 (Oct–Nov):</strong> First full revision &amp; error-correction notebook</li>
+        <li><strong>Phase 3 (Dec–Jan):</strong> Mock tests, previous-year papers, timed writing</li>
+        <li><strong>Phase 4 (Feb):</strong> Final formula/date revision &amp; confidence tuning</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <div class="table-wrap">
+        <table id="scheduleTable">
+          <thead>
+            <tr><th>#</th><th>Date</th><th>Day</th><th>Phase</th><th>Daily Focus (2-3 hrs)</th></tr>
+          </thead>
+          <tbody id="scheduleBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/app.js"></script>
+  <script>
+    const start = '2026-03-16';
+    const end   = '2027-02-12';
+    const days  = weekdaysBetween(start, end);
+    const tbody = document.getElementById('scheduleBody');
+    const todayStr = formatDate(new Date());
+
+    const dayFocus = {
+      1: '📐 Maths concept + 5 solved problems',
+      2: '🔬 Science concept + diagram practice',
+      3: '🌍🏛️📜💰 Social Science chapter + recall writing',
+      4: '📐 Maths mixed practice + 📖👣✍️ English chapter',
+      5: '📝 Weekly revision + mini test (all subjects)'
+    };
+
+    function getPhase(d) {
+      const m = d.getMonth();
+      const y = d.getFullYear();
+      if (y === 2026 && m <= 8) return 'Phase 1';
+      if (y === 2026 && m <= 10) return 'Phase 2';
+      if (y === 2027 && m === 0) return 'Phase 3';
+      if (y === 2026 && m === 11) return 'Phase 3';
+      return 'Phase 4';
+    }
+
+    let todayRowEl = null;
+
+    days.forEach((d, i) => {
+      const tr = document.createElement('tr');
+      const ds = formatDate(d);
+      const dow = d.getDay();
+      const dayName = d.toLocaleDateString('en-IN', { weekday: 'short' });
+
+      if (ds === todayStr) {
+        tr.classList.add('today-row');
+        todayRowEl = tr;
+      }
+
+      tr.innerHTML =
+        '<td>' + (i + 1) + '</td>' +
+        '<td>' + friendlyDate(d) + '</td>' +
+        '<td>' + dayName + '</td>' +
+        '<td>' + getPhase(d) + '</td>' +
+        '<td>' + (dayFocus[dow] || '—') + '</td>';
+
+      tbody.appendChild(tr);
+    });
+
+    // Auto-scroll to today
+    if (todayRowEl) {
+      setTimeout(() => {
+        todayRowEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 400);
+    }
+  </script>
+</body>
+</html>

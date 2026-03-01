@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Oliver's Dream</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+
+  <header class="header">
+    <a href="index.html" class="brand-bar"><img src="assets/logo.svg" alt="Oliver's Dream" class="site-logo"><div class="brand-text"><span class="brand-name">Oliver's Dream</span><span class="brand-motto">The road less travelled</span></div></a>
+    <h1>Dashboard</h1>
+    <p>Dream big, study smart — your board exam journey starts here</p>
+    <div class="header-stats">
+      <span class="level-badge" id="levelBadge">⭐ Beginner</span>
+      <span class="stat-pill">🔥 Streak: <span class="val" id="streakVal">0</span></span>
+      <span class="stat-pill">⚡ XP: <span class="val" id="xpVal">0</span></span>
+    </div>
+    <div style="display:flex;justify-content:center;margin-top:8px;">
+      <div class="xp-bar-wrap">
+        <div class="xp-bar-fill" id="xpBar" style="width:0%"></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="top-tabs">
+      <a href="index.html" class="active">🏠 Dashboard</a>
+      <a href="schedule.html">📅 Schedule</a>
+      <a href="tracker.html">✏️ Tracker</a>
+    </div>
+    <nav class="nav">
+      <a href="maths/index.html">📐 Maths</a>
+      <a href="science/index.html">🔬 Science</a>
+      <a href="geography/index.html">🌍 Geography</a>
+      <a href="civics/index.html">🏛️ Civics</a>
+      <a href="history/index.html">📜 History</a>
+      <a href="economics/index.html">💰 Economics</a>
+      <a href="first_flight/index.html">📖 First Flight</a>
+      <a href="footprints/index.html">👣 Footprints</a>
+      <a href="words_expressions/index.html">✍️ Words &amp; Expressions</a>
+    </nav>
+
+    <!-- Greeting + Quote (top panel) -->
+    <section class="greeting-quote-bar stagger">
+      <div class="greeting-side">
+        <h3 id="greeting">Good Day, Oliver! 🚀</h3>
+        <div id="todayFocus"></div>
+      </div>
+      <div class="quote-side">
+        <span class="quote-text" id="quoteText">Push yourself, because no one else is going to do it for you.</span>
+      </div>
+    </section>
+
+    <!-- Overall Progress Ring -->
+    <div style="display:flex;justify-content:center;margin:16px 0 24px;">
+      <div class="progress-ring-wrap">
+        <svg width="140" height="140" viewBox="0 0 140 140">
+          <circle cx="70" cy="70" r="60" stroke="rgba(255,255,255,0.06)" stroke-width="10" fill="none"/>
+          <circle id="progressRing" cx="70" cy="70" r="60"
+            stroke="url(#ringGrad)" stroke-width="10" fill="none"
+            stroke-linecap="round"
+            stroke-dasharray="377" stroke-dashoffset="377"
+            transform="rotate(-90 70 70)"
+            style="transition:stroke-dashoffset 1s ease"/>
+          <defs>
+            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#8b5cf6"/>
+              <stop offset="100%" stop-color="#06b6d4"/>
+            </linearGradient>
+          </defs>
+          <text x="70" y="66" text-anchor="middle" fill="#e2e8f0" font-size="26" font-weight="800" id="ringPct">0%</text>
+          <text x="70" y="84" text-anchor="middle" fill="#94a3b8" font-size="11">Overall</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Exploration Banner (visible before launch) -->
+    <section class="card stagger" id="exploreBanner" style="margin-bottom:20px;display:none;border:1px solid rgba(139,92,246,0.4);background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(6,182,212,0.08));text-align:center;padding:24px 20px;">
+      <h3>🚀 Exploration Mode</h3>
+      <p style="margin-top:8px;">Board exams in <strong id="countdown"></strong> days — keep exploring!</p>
+    </section>
+
+    <!-- Subject Cards -->
+    <section class="grid">
+      <article class="card stagger" data-subject="maths">
+        <h3>📐 Maths</h3>
+        <div class="kpi" id="mathDone">0 / 14</div>
+        <div class="progress-wrap"><div id="mathBar" class="progress"></div></div>
+        <p class="footer-note">14 chapters — algebra, geometry, trig & more</p>
+      </article>
+
+      <article class="card stagger" data-subject="science">
+        <h3>🔬 Science</h3>
+        <div class="kpi" id="scienceDone">0 / 13</div>
+        <div class="progress-wrap"><div id="scienceBar" class="progress"></div></div>
+        <p class="footer-note">13 chapters — chemistry, physics, biology</p>
+      </article>
+
+      <article class="card stagger" data-subject="geography">
+        <h3>🌍 Geography</h3>
+        <div class="kpi" id="geoDone">0 / 7</div>
+        <div class="progress-wrap"><div id="geoBar" class="progress"></div></div>
+        <p class="footer-note">7 chapters — Contemporary India II</p>
+      </article>
+
+      <article class="card stagger" data-subject="civics">
+        <h3>🏛️ Civics</h3>
+        <div class="kpi" id="civDone">0 / 5</div>
+        <div class="progress-wrap"><div id="civBar" class="progress"></div></div>
+        <p class="footer-note">5 chapters — Democratic Politics II</p>
+      </article>
+
+      <article class="card stagger" data-subject="history">
+        <h3>📜 History</h3>
+        <div class="kpi" id="histDone">0 / 5</div>
+        <div class="progress-wrap"><div id="histBar" class="progress"></div></div>
+        <p class="footer-note">5 chapters — India & the Contemporary World II</p>
+      </article>
+
+      <article class="card stagger" data-subject="economics">
+        <h3>💰 Economics</h3>
+        <div class="kpi" id="econDone">0 / 5</div>
+        <div class="progress-wrap"><div id="econBar" class="progress"></div></div>
+        <p class="footer-note">5 chapters — Understanding Economic Development</p>
+      </article>
+
+      <article class="card stagger" data-subject="first_flight">
+        <h3>📖 First Flight</h3>
+        <div class="kpi" id="ffDone">0 / 9</div>
+        <div class="progress-wrap"><div id="ffBar" class="progress"></div></div>
+        <p class="footer-note">9 chapters — prose &amp; poetry</p>
+      </article>
+
+      <article class="card stagger" data-subject="footprints">
+        <h3>👣 Footprints without Feet</h3>
+        <div class="kpi" id="fpDone">0 / 9</div>
+        <div class="progress-wrap"><div id="fpBar" class="progress"></div></div>
+        <p class="footer-note">9 supplementary reader stories</p>
+      </article>
+
+      <article class="card stagger" data-subject="words_expressions">
+        <h3>✍️ Words &amp; Expressions II</h3>
+        <div class="kpi" id="weDone">0 / 9</div>
+        <div class="progress-wrap"><div id="weBar" class="progress"></div></div>
+        <p class="footer-note">9 units — vocabulary, grammar &amp; writing</p>
+      </article>
+
+      <article class="card stagger">
+        <h3>⏱️ Total Study Hours</h3>
+        <div class="kpi" id="hoursDone">0 hrs</div>
+        <p class="footer-note">Target: 500+ focused hours before exams</p>
+      </article>
+
+      <article class="card stagger">
+        <h3>🗺️ Roadmap</h3>
+        <ul class="list">
+          <li>Phase 1 (Mar–Sep): Concept Foundation</li>
+          <li>Phase 2 (Oct–Nov): Revision Cycle 1</li>
+          <li>Phase 3 (Dec–Jan): Intensive Tests</li>
+          <li>Phase 4 (Feb): Final Sprint</li>
+        </ul>
+      </article>
+    </section>
+  </main>
+
+  <script src="assets/app.js"></script>
+  <script>
+    // ---- Populate subject stats ----
+    const mathS  = calculateMathStats(14);
+    const sciS   = calculateScienceStats(13);
+    const geoS   = calculateSubjectStats('geo', 7);
+    const civS   = calculateSubjectStats('civ', 5);
+    const histS  = calculateSubjectStats('hist', 5);
+    const econS  = calculateSubjectStats('econ', 5);
+    const ffS    = calculateSubjectStats('ff', 9);
+    const fpS    = calculateSubjectStats('fp', 9);
+    const weS    = calculateSubjectStats('we', 9);
+
+    document.getElementById('mathDone').textContent    = mathS.doneMath      + ' / 14';
+    document.getElementById('scienceDone').textContent  = sciS.doneScience    + ' / 13';
+    document.getElementById('geoDone').textContent      = geoS.done           + ' / 7';
+    document.getElementById('civDone').textContent      = civS.done           + ' / 5';
+    document.getElementById('histDone').textContent     = histS.done          + ' / 5';
+    document.getElementById('econDone').textContent     = econS.done          + ' / 5';
+    document.getElementById('ffDone').textContent       = ffS.done            + ' / 9';
+    document.getElementById('fpDone').textContent       = fpS.done            + ' / 9';
+    document.getElementById('weDone').textContent       = weS.done            + ' / 9';
+    document.getElementById('hoursDone').textContent    = mathS.totalHours    + ' hrs';
+
+    document.getElementById('mathBar').style.width     = mathS.percent  + '%';
+    document.getElementById('scienceBar').style.width  = sciS.percent   + '%';
+    document.getElementById('geoBar').style.width      = geoS.percent   + '%';
+    document.getElementById('civBar').style.width      = civS.percent   + '%';
+    document.getElementById('histBar').style.width     = histS.percent  + '%';
+    document.getElementById('econBar').style.width     = econS.percent  + '%';
+    document.getElementById('ffBar').style.width       = ffS.percent    + '%';
+    document.getElementById('fpBar').style.width       = fpS.percent    + '%';
+    document.getElementById('weBar').style.width       = weS.percent    + '%';
+
+    // Overall progress ring
+    const totalDone  = mathS.doneMath + sciS.doneScience + geoS.done + civS.done + histS.done + econS.done + ffS.done + fpS.done + weS.done;
+    const totalAll   = 76;
+    const overallPct = Math.round((totalDone / totalAll) * 100);
+    const circumference = 2 * Math.PI * 60; // 377
+    document.getElementById('ringPct').textContent = overallPct + '%';
+    setTimeout(() => {
+      document.getElementById('progressRing').style.strokeDashoffset =
+        circumference - (circumference * overallPct / 100);
+    }, 300);
+
+    // ---- Gamification ----
+    const xpData = getXPData();
+    document.getElementById('levelBadge').textContent = '⭐ ' + xpData.level;
+    document.getElementById('streakVal').textContent  = xpData.streak;
+    document.getElementById('xpVal').textContent      = xpData.xp;
+    document.getElementById('xpBar').style.width      = xpData.xpProgress + '%';
+
+    if (xpData.justLeveledUp) { launchConfetti(); }
+
+    // ---- Greeting ----
+    const hour = new Date().getHours();
+    let greet = 'Good Day';
+    if (hour < 6)        greet = '🌙 Night Owl Mode';
+    else if (hour < 12)  greet = '☀️ Good Morning';
+    else if (hour < 17)  greet = '🌤️ Good Afternoon';
+    else if (hour < 21)  greet = '🌆 Good Evening';
+    else                 greet = '🌙 Night Owl Mode';
+    document.getElementById('greeting').textContent = greet + ', Oliver! 🚀';
+
+    // ---- Today's Focus ----
+    const dayFocus = [
+      'Sunday — rest day! Recharge for the week ahead 😎',
+      ['📐 Maths practice problems', '🔬 Science — read one chapter'],
+      ['🌍 Geography notes review', '🏛️ Civics — key terms revision'],
+      ['📐 Maths — solve worksheet', '📜 History — timeline practice'],
+      ['🔬 Science experiments & diagrams', '�👣 English — read a chapter + grammar unit'],
+      ['📐 Maths revision', '🔬 Science quick quiz', '💰 Economics case studies'],
+      'Saturday — light revision or take a break! 🎮'
+    ];
+    const today = new Date().getDay();
+    const focusEl = document.getElementById('todayFocus');
+    const items = dayFocus[today];
+    if (Array.isArray(items)) {
+      focusEl.innerHTML = items.map(i => '<div class="focus-item">' + i + '</div>').join('');
+    } else {
+      focusEl.innerHTML = '<div class="focus-item">' + items + '</div>';
+    }
+
+    // ---- Random Quote ----
+    const quotes = [
+      "Push yourself, because no one else is going to do it for you.",
+      "Success is the sum of small efforts repeated day in and day out.",
+      "Don't watch the clock; do what it does. Keep going.",
+      "The secret of getting ahead is getting started.",
+      "It always seems impossible until it's done.",
+      "Dream big. Start small. Act now.",
+      "Your only limit is your mind.",
+      "A little progress each day adds up to big results.",
+      "Focus on being productive, not busy.",
+      "Believe you can and you're halfway there.",
+      "Small daily improvements are the key to staggering long-term results.",
+      "Education is the passport to the future."
+    ];
+    document.getElementById('quoteText').textContent = quotes[Math.floor(Math.random() * quotes.length)];
+
+    // ---- Exploration banner ----
+    if (isExplorationMode()) {
+      const banner = document.getElementById('exploreBanner');
+      banner.style.display = 'block';
+      document.getElementById('countdown').textContent = daysUntilLaunch();
+    }
+  </script>
+</body>
+</html>

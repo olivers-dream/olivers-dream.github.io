@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>02 - Polynomials Worksheet</title>
+    <link rel="stylesheet" href="../../assets/styles.css" />
+</head>
+<body>
+    <header class="header">
+        <a href="../../index.html" class="brand-bar"><img src="../../assets/logo.svg" alt="Oliver's Dream" class="site-logo"><div class="brand-text"><span class="brand-name">Oliver's Dream</span><span class="brand-motto">The road less travelled</span></div></a><h1>02 - Polynomials - Worksheet Pack</h1>
+        <p>No signup required • Attempt first, then reveal</p>
+    </header>
+
+    <main class="container">
+        <div class="top-tabs">
+            <a href="../../index.html">🏠 Dashboard</a>
+    </div>
+    <nav class="nav">
+            <a href="../../maths/index.html">📐 Maths</a>
+            <a href="../../maths/chapter-02-polynomials.html">Back to Chapter</a>
+            <a href="index.html">Worksheets Index</a>
+    </nav>
+
+        <section class="card">
+            <h3>Chapter Context (Detailed Breakdown)</h3>
+            <p>This chapter teaches polynomial structure, degree, zeros, graph meaning, and relation between roots and coefficients for quadratics. It helps in equation-solving and function thinking.</p>
+            <ul class="list"><li>Build polynomial basics: term, coefficient, degree, and standard forms.</li><li>Interpret zeros algebraically (p(x)=0) and graphically (x-axis intersections).</li><li>Use root-coefficient relations for quadratics to avoid lengthy factorization.</li><li>Apply division algorithm and factor theorem in proof and objective questions.</li></ul>
+        </section>
+
+        <section class="grid" style="margin-top:16px;">
+            <article class="card">
+                <h3>Remember Before Solving</h3>
+                <ul class="list"><li>Zero means p(x)=0 exactly.</li><li>Sign in α+β is negative.</li><li>Check factors using substitution.</li></ul>
+            </article>
+            <article class="card">
+                <h3>Boxed Items (Must-Memorize)</h3>
+                <div class="formula-box"><ul class="list"><li>Zeros of Polynomial</li><li>Remainder Theorem</li><li>Factor Theorem</li></ul></div>
+            </article>
+        </section>
+
+        <section class="card" style="margin-top:16px;">
+            <h3>Section A - NCERT Style Practice</h3>
+            <p class="footer-note">Solve in notebook first. Use reveal only to verify method.</p>
+            
+<div class="qa-box">
+    <div class="qa-title">A1. Find zeros of x² - 5x + 6.</div>
+    <p><b>Expected final answer:</b> 2,3</p>
+    <div class="qa-input-row">
+        <input id="ws-a-inp-1" type="text" placeholder="Type your answer" />
+        <button class="btn" onclick="checkTypedAnswer('ws-a-inp-1', '2 and 3|3,2', 'ws-a-fdb-1', 'ws-a-sol-1')">Check</button>
+        <button class="btn secondary" onclick="revealSolution('ws-a-sol-1')">Reveal Steps</button>
+    </div>
+    <div id="ws-a-fdb-1" class="feedback"></div>
+    <div id="ws-a-sol-1" class="hidden"><p><b>Steps:</b> Factor: x² - 5x + 6 = (x-2)(x-3). So zeros are 2 and 3.</p></div>
+</div>
+            
+
+<div class="qa-box">
+    <div class="qa-title">A2. For 2x² + 7x + 3, find α+β.</div>
+    <p><b>Expected final answer:</b> -7/2</p>
+    <div class="qa-input-row">
+        <input id="ws-a-inp-2" type="text" placeholder="Type your answer" />
+        <button class="btn" onclick="checkTypedAnswer('ws-a-inp-2', '-3.5|-7by2', 'ws-a-fdb-2', 'ws-a-sol-2')">Check</button>
+        <button class="btn secondary" onclick="revealSolution('ws-a-sol-2')">Reveal Steps</button>
+    </div>
+    <div id="ws-a-fdb-2" class="feedback"></div>
+    <div id="ws-a-sol-2" class="hidden"><p><b>Steps:</b> For ax²+bx+c, α+β = -b/a = -7/2.</p></div>
+</div>
+            
+        </section>
+
+        <section class="card" style="margin-top:16px;">
+            <h3>Section B - Mixed Difficulty Drill</h3>
+            
+<div class="qa-box">
+    <div class="qa-title"><span class="tag easy">EASY</span> B1. Find zeros of x² - 9.</div>
+    <div class="qa-input-row">
+        <input id="ws-b-inp-1" type="text" placeholder="Type your final answer" />
+        <button class="btn" onclick="checkTypedAnswer('ws-b-inp-1', 'x = ±3.', 'ws-b-fdb-1', 'ws-b-sol-1')">Check</button>
+        <button class="btn secondary" onclick="revealSolution('ws-b-sol-1')">Reveal Answer</button>
+    </div>
+    <div id="ws-b-fdb-1" class="feedback"></div>
+    <div id="ws-b-sol-1" class="hidden"><p><b>Answer:</b> x = ±3.</p></div>
+</div>
+        
+
+<div class="qa-box">
+    <div class="qa-title"><span class="tag easy">EASY</span> B2. Evaluate p(1) for p(x)=x²+2x.</div>
+    <div class="qa-input-row">
+        <input id="ws-b-inp-2" type="text" placeholder="Type your final answer" />
+        <button class="btn" onclick="checkTypedAnswer('ws-b-inp-2', '3', 'ws-b-fdb-2', 'ws-b-sol-2')">Check</button>
+        <button class="btn secondary" onclick="revealSolution('ws-b-sol-2')">Reveal Answer</button>
+    </div>
+    <div id="ws-b-fdb-2" class="feedback"></div>
+    <div id="ws-b-sol-2" class="hidden"><p><b>Answer:</b> 3</p></div>
+</div>
+        
+
+<div class="qa-box">
+    <div class="qa-title"><span class="tag easy">EASY</span> B3. Degree of polynomial 5x³+2x+1?</div>
+    <div class="qa-input-row">
+        <input id="ws-b-inp-3" type="text" placeholder="Type your final answer" />
+        <button class="btn" onclick="checkTypedAnswer('ws-b-inp-3', '3', 'ws-b-fdb-3', 'ws-b-sol-3')">Check</button>
+        <button class="btn secondary" onclick="revealSolution('ws-b-sol-3')">Reveal Answer</button>
+    </div>
+    <div id="ws-b-fdb-3" class="feedback"></div>
+    <div id="ws-b-sol-3" class="hidden"><p><b>Answer:</b> 3</p></div>
+</div>
+        
+
+<div class="qa-box">
+    <div class="qa-title"><span class="tag med">MED</span> B4. If zeros are 4 and -2, form polynomial.</div>
+    <div class="qa-input-row">
+        <input id="ws-b-inp-4" type="text" placeholder="Type your final answer" />
+        <button class="btn" onclick="checkTypedAnswer('ws-b-inp-4', 'x² -2x -8', 'ws-b-fdb-4', 'ws-b-sol-4')">Check</button>
+        <button class="btn secondary" onclick="revealSolution('ws-b-sol-4')">Reveal Answer</button>
+    </div>
+    <div id="ws-b-fdb-4" class="feedback"></div>
+    <div id="ws-b-sol-4" class="hidden"><p><b>Answer:</b> x² -2x -8</p></div>
+</div>
+        
+
+<div class="qa-box">
+    <div class="qa-title"><span class="tag med">MED</span> B5. Factor x² - 7x + 10.</div>
+    <div class="qa-input-row">
+        <input id="ws-b-inp-5" type="text" placeholder="Type your final answer" />
+        <button class="btn" onclick="checkTypedAnswer('ws-b-inp-5', '(x-2)(x-5)', 'ws-b-fdb-5', 'ws-b-sol-5')">Check</button>
+        <button class="btn secondary" onclick="revealSolution('ws-b-sol-5')">Reveal Answer</button>
+    </div>
+    <div id="ws-b-fdb-5" class="feedback"></div>
+    <div id="ws-b-sol-5" class="hidden"><p><b>Answer:</b> (x-2)(x-5)</p></div>
+</div>
+        
+
+<div class="qa-box">
+    <div class="qa-title"><span class="tag med">MED</span> B6. Find relationship between roots and coefficients for 3x²-9x+6.</div>
+    <div class="qa-input-row">
+        <input id="ws-b-inp-6" type="text" placeholder="Type your final answer" />
+        <button class="btn" onclick="checkTypedAnswer('ws-b-inp-6', 'Sum=-3, product=2', 'ws-b-fdb-6', 'ws-b-sol-6')">Check</button>
+        <button class="btn secondary" onclick="revealSolution('ws-b-sol-6')">Reveal Answer</button>
+    </div>
+    <div id="ws-b-fdb-6" class="feedback"></div>
+    <div id="ws-b-sol-6" class="hidden"><p><b>Answer:</b> Sum=-3, product=2</p></div>
+</div>
+        
+
+<div class="qa-box">
+    <div class="qa-title"><span class="tag hard">HARD</span> B7. Divide 2x³+3x²-11x-6 by (x-2).</div>
+    <div class="qa-input-row">
+        <input id="ws-b-inp-7" type="text" placeholder="Type your final answer" />
+        <button class="btn" onclick="checkTypedAnswer('ws-b-inp-7', 'Quotient 2x²+7x+3, remainder 0.', 'ws-b-fdb-7', 'ws-b-sol-7')">Check</button>
+        <button class="btn secondary" onclick="revealSolution('ws-b-sol-7')">Reveal Answer</button>
+    </div>
+    <div id="ws-b-fdb-7" class="feedback"></div>
+    <div id="ws-b-sol-7" class="hidden"><p><b>Answer:</b> Quotient 2x²+7x+3, remainder 0.</p></div>
+</div>
+        
+
+<div class="qa-box">
+    <div class="qa-title"><span class="tag hard">HARD</span> B8. For x²+px+q with roots α and 2α, find p in terms of α.</div>
+    <div class="qa-input-row">
+        <input id="ws-b-inp-8" type="text" placeholder="Type your final answer" />
+        <button class="btn" onclick="checkTypedAnswer('ws-b-inp-8', 'p = -3α', 'ws-b-fdb-8', 'ws-b-sol-8')">Check</button>
+        <button class="btn secondary" onclick="revealSolution('ws-b-sol-8')">Reveal Answer</button>
+    </div>
+    <div id="ws-b-fdb-8" class="feedback"></div>
+    <div id="ws-b-sol-8" class="hidden"><p><b>Answer:</b> p = -3α</p></div>
+</div>
+        
+
+<div class="qa-box">
+    <div class="qa-title"><span class="tag hard">HARD</span> B9. If p(x)=x⁴-1, find all zeros.</div>
+    <div class="qa-input-row">
+        <input id="ws-b-inp-9" type="text" placeholder="Type your final answer" />
+        <button class="btn" onclick="checkTypedAnswer('ws-b-inp-9', '±1', 'ws-b-fdb-9', 'ws-b-sol-9')">Check</button>
+        <button class="btn secondary" onclick="revealSolution('ws-b-sol-9')">Reveal Answer</button>
+    </div>
+    <div id="ws-b-fdb-9" class="feedback"></div>
+    <div id="ws-b-sol-9" class="hidden"><p><b>Answer:</b> ±1</p></div>
+</div>
+        
+        </section>
+
+        <section class="card" style="margin-top:16px;">
+            <h3>Quick Formula + Error Revision</h3>
+            <div class="formula-box"><ul class="list"><li>α + β = -b/a</li><li>αβ = c/a</li></ul></div>
+            <h4 style="margin-top:14px;">Common mistakes to avoid</h4>
+            <ul class="list"><li>Confusing factor with zero (related but not same wording).</li><li>Sign errors in α+β relation.</li></ul>
+        </section>
+
+        <section class="card" style="margin-top:16px;">
+            <h3>Self-Check Checklist</h3>
+            <ul class="list">
+                <li>Completed all Section A questions without seeing steps first.</li>
+                <li>Completed at least 2 mixed-difficulty questions correctly.</li>
+                <li>Reviewed all boxed items and formulas once more.</li>
+                <li>Logged mistakes in your tracker for next-day correction.</li>
+            </ul>
+        </section>
+    </main>
+
+    <script src="../../assets/app.js"></script>
+</body>
+</html>

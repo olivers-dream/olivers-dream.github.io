@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>✍️ Words &amp; Expressions II — Oliver's Dream</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body>
+  <header class="header">
+    <a href="../index.html" class="brand-bar"><img src="../assets/logo.svg" alt="Oliver's Dream" class="site-logo"><div class="brand-text"><span class="brand-name">Oliver's Dream</span><span class="brand-motto">The road less travelled</span></div></a><h1>✍️ Words &amp; Expressions II</h1>
+    <p>9 Units | Vocabulary + Grammar + Writing | NCERT Class 10 English Workbook</p>
+  </header>
+
+  <main class="container">
+    <div class="top-tabs">
+      <a href="../index.html">🏠 Dashboard</a>
+      <a href="../schedule.html">📅 Schedule</a>
+      <a href="../tracker.html">✏️ Tracker</a>
+    </div>
+    <nav class="nav">
+      <a href="../maths/index.html">📐 Maths</a>
+      <a href="../science/index.html">🔬 Science</a>
+      <a href="../geography/index.html">🌍 Geography</a>
+      <a href="../civics/index.html">🏛️ Civics</a>
+      <a href="../history/index.html">📜 History</a>
+      <a href="../economics/index.html">💰 Economics</a>
+      <a href="../first_flight/index.html">📖 First Flight</a>
+      <a href="../footprints/index.html">👣 Footprints</a>
+      <a href="index.html" class="active">✍️ Words &amp; Expressions</a>
+    </nav>
+
+    <section class="card">
+      <h3>How to use each chapter page (2-3 hours)</h3>
+      <ul class="list">
+        <li>Read <b>Simple Explanation</b> and <b>Analogy</b> first.</li>
+        <li>Solve <b>Worked Examples</b> without seeing solution.</li>
+        <li>Attempt <b>Practice Set</b> (easy, medium, hard).</li>
+        <li>Use <b>Imagine &amp; Visualize</b> to picture hard ideas.</li>
+        <li>Mark chapter complete only after scoring 90%+ in self-test.</li>
+      </ul>
+    </section>
+
+    <section class="card" style="margin-bottom:16px;">
+      <h3>Words &amp; Expressions Progress</h3>
+      <div class="kpi" id="progressText">0 / 9 completed</div>
+      <div class="progress-wrap"><div class="progress" id="progressBar"></div></div>
+    </section>
+
+    <section class="grid" style="margin-top:16px;" id="chapterGrid"></section>
+  </main>
+
+  <script src="../assets/app.js"></script>
+  <script>
+    const chapters = [
+      ['we-01', 'Words & Expressions II — Unit 01: A Letter to God', 'unit-01-a-letter-to-god.html'],
+      ['we-02', 'Words & Expressions II — Unit 02: Nelson Mandela', 'unit-02-nelson-mandela.html'],
+      ['we-03', 'Words & Expressions II — Unit 03: Two Stories about Flying', 'unit-03-two-stories-flying.html'],
+      ['we-04', 'Words & Expressions II — Unit 04: From the Diary of Anne Frank', 'unit-04-diary-of-anne-frank.html'],
+      ['we-05', 'Words & Expressions II — Unit 05: Glimpses of India', 'unit-05-glimpses-of-india.html'],
+      ['we-06', 'Words & Expressions II — Unit 06: Mijbil the Otter', 'unit-06-mijbil-the-otter.html'],
+      ['we-07', 'Words & Expressions II — Unit 07: Madam Rides the Bus', 'unit-07-madam-rides-the-bus.html'],
+      ['we-08', 'Words & Expressions II — Unit 08: The Sermon at Benares', 'unit-08-sermon-at-benares.html'],
+      ['we-09', 'Words & Expressions II — Unit 09: The Proposal', 'unit-09-the-proposal.html']
+    ];
+
+    const grid = document.getElementById('chapterGrid');
+    const progress = getChapterProgress();
+
+    chapters.forEach(([id, title, href]) => {
+      const done = !!progress[id];
+      const card = document.createElement('article');
+      card.className = 'card';
+      card.innerHTML = `
+        <h3>${title}</h3>
+        <p>Status: <span class="tag ${done ? 'easy' : 'med'}">${done ? 'Completed' : 'In Progress'}</span></p>
+        <a class="btn" href="${href}">Open Unit</a>
+      `;
+      grid.appendChild(card);
+    });
+
+    const stats = calculateSubjectStats('we', 9);
+    document.getElementById('progressText').textContent = `${stats.done} / ${stats.total} completed`;
+    document.getElementById('progressBar').style.width = `${stats.percent}%`;
+  </script>
+</body>
+</html>

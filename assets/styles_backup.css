@@ -1,0 +1,275 @@
+:root {
+  --bg: #f6f8fc;
+  --card: #ffffff;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --primary: #2563eb;
+  --primary-soft: #dbeafe;
+  --success: #16a34a;
+  --warn: #d97706;
+  --danger: #dc2626;
+  --border: #e5e7eb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.container {
+  width: min(1100px, 92vw);
+  margin: 24px auto 48px;
+}
+
+.header {
+  background: linear-gradient(135deg, #1d4ed8, #2563eb);
+  color: white;
+  padding: 22px 0;
+}
+
+.header h1,
+.header p {
+  width: min(1100px, 92vw);
+  margin: 0 auto;
+}
+
+.header p {
+  margin-top: 6px;
+  opacity: 0.95;
+}
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.nav a {
+  text-decoration: none;
+  color: var(--primary);
+  background: var(--primary-soft);
+  border: 1px solid #bfdbfe;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(17, 24, 39, 0.05);
+}
+
+.card h3 {
+  margin-top: 0;
+}
+
+.kpi {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 8px 0;
+}
+
+.progress-wrap {
+  background: #eef2ff;
+  border-radius: 99px;
+  overflow: hidden;
+  height: 12px;
+}
+
+.progress {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+  transition: width 0.4s ease;
+}
+
+.list {
+  padding-left: 18px;
+  margin: 0;
+}
+
+.btn {
+  border: 0;
+  border-radius: 10px;
+  background: var(--primary);
+  color: white;
+  padding: 9px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn.secondary {
+  background: #334155;
+}
+
+.btn.warn {
+  background: var(--warn);
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 10px;
+  font-size: 0.95rem;
+  background: white;
+}
+
+label {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+th,
+td {
+  border: 1px solid var(--border);
+  padding: 10px;
+  text-align: left;
+  font-size: 0.92rem;
+}
+
+th {
+  background: #eff6ff;
+}
+
+.tag {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.tag.easy {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.tag.med {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.tag.hard {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.accordion {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  background: #fff;
+}
+
+.accordion summary {
+  cursor: pointer;
+  padding: 11px 12px;
+  font-weight: 600;
+}
+
+.accordion .content {
+  padding: 0 12px 12px;
+}
+
+.chapter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.footer-note {
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin-top: 14px;
+}
+
+.qa-box {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin: 10px 0;
+  background: #fcfdff;
+}
+
+.qa-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.qa-input-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin: 10px 0;
+}
+
+.qa-input-row input {
+  max-width: 220px;
+}
+
+.feedback {
+  font-size: 0.9rem;
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+.feedback.ok {
+  color: var(--success);
+}
+
+.feedback.retry {
+  color: var(--warn);
+}
+
+.hidden {
+  display: none;
+}
+
+.formula-box {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 12px;
+}

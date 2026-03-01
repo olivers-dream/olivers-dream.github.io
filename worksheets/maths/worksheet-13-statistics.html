@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>13 - Statistics Worksheet</title>
+    <link rel="stylesheet" href="../../assets/styles.css" />
+</head>
+<body>
+    <header class="header">
+        <a href="../../index.html" class="brand-bar"><img src="../../assets/logo.svg" alt="Oliver's Dream" class="site-logo"><div class="brand-text"><span class="brand-name">Oliver's Dream</span><span class="brand-motto">The road less travelled</span></div></a><h1>13 - Statistics - Worksheet Pack</h1>
+        <p>No signup required • Attempt first, then reveal</p>
+    </header>
+
+    <main class="container">
+        <div class="top-tabs">
+            <a href="../../index.html">🏠 Dashboard</a>
+    </div>
+    <nav class="nav">
+            <a href="../../maths/index.html">📐 Maths</a>
+            <a href="../../maths/chapter-13-statistics.html">Back to Chapter</a>
+            <a href="index.html">Worksheets Index</a>
+    </nav>
+
+        <section class="card">
+            <h3>Chapter Context (Detailed Breakdown)</h3>
+            <p>You summarize data using mean, median, mode and understand grouped distributions with cumulative frequency and ogive curves.</p>
+            <ul class="list"><li>Distinguish mean, median, and mode by interpretation need.</li><li>Organize grouped data with class marks and cumulative frequency.</li><li>Use median formula with correct median class selection.</li><li>Read ogive graph to estimate central tendency values.</li></ul>
+        </section>
+
+        <section class="grid" style="margin-top:16px;">
+            <article class="card">
+                <h3>Remember Before Solving</h3>
+                <ul class="list"><li>Median class from cumulative frequency.</li><li>Class mark needed for mean.</li><li>Mode means highest frequency.</li></ul>
+            </article>
+            <article class="card">
+                <h3>Boxed Items (Must-Memorize)</h3>
+                <div class="formula-box"><ul class="list"><li>Mean/Median/Mode Usage</li><li>Median Formula</li><li>Ogive Concept</li></ul></div>
+            </article>
+        </section>
+
+        <section class="card" style="margin-top:16px;">
+            <h3>Section A - NCERT Style Practice</h3>
+            <p class="footer-note">Solve in notebook first. Use reveal only to verify method.</p>
+            
+<div class="qa-box">
+    <div class="qa-title">A1. Mean of 2,4,6,8,10?</div>
+    <p><b>Expected final answer:</b> 6</p>
+    <div class="qa-input-row">
+        <input id="ws-a-inp-1" type="text" placeholder="Type your answer" />
+        <button class="btn" onclick="checkTypedAnswer('ws-a-inp-1', '6.0', 'ws-a-fdb-1', 'ws-a-sol-1')">Check</button>
+        <button class="btn secondary" onclick="revealSolution('ws-a-sol-1')">Reveal Steps</button>
+    </div>
+    <div id="ws-a-fdb-1" class="feedback"></div>
+    <div id="ws-a-sol-1" class="hidden"><p><b>Steps:</b> Mean = (2+4+6+8+10)/5 = 30/5 = 6.</p></div>
+</div>
+            
+
+<div class="qa-box">
+    <div class="qa-title">A2. Mode of 3,4,4,5,6?</div>
+    <p><b>Expected final answer:</b> 4</p>
+    <div class="qa-input-row">
+        <input id="ws-a-inp-2" type="text" placeholder="Type your answer" />
+        <button class="btn" onclick="checkTypedAnswer('ws-a-inp-2', '4.0', 'ws-a-fdb-2', 'ws-a-sol-2')">Check</button>
+        <button class="btn secondary" onclick="revealSolution('ws-a-sol-2')">Reveal Steps</button>
+    </div>
+    <div id="ws-a-fdb-2" class="feedback"></div>
+    <div id="ws-a-sol-2" class="hidden"><p><b>Steps:</b> Most frequent value is 4, so mode = 4.</p></div>
+</div>
+            
+        </section>
+
+        <section class="card" style="margin-top:16px;">
+            <h3>Section B - Mixed Difficulty Drill</h3>
+            
+<div class="qa-box">
+    <div class="qa-title"><span class="tag easy">EASY</span> B1. Median of 5,7,9?</div>
+    <div class="qa-input-row">
+        <input id="ws-b-inp-1" type="text" placeholder="Type your final answer" />
+        <button class="btn" onclick="checkTypedAnswer('ws-b-inp-1', '7', 'ws-b-fdb-1', 'ws-b-sol-1')">Check</button>
+        <button class="btn secondary" onclick="revealSolution('ws-b-sol-1')">Reveal Answer</button>
+    </div>
+    <div id="ws-b-fdb-1" class="feedback"></div>
+    <div id="ws-b-sol-1" class="hidden"><p><b>Answer:</b> 7</p></div>
+</div>
+        
+
+<div class="qa-box">
+    <div class="qa-title"><span class="tag easy">EASY</span> B2. Mean of 10,20,30?</div>
+    <div class="qa-input-row">
+        <input id="ws-b-inp-2" type="text" placeholder="Type your final answer" />
+        <button class="btn" onclick="checkTypedAnswer('ws-b-inp-2', '20', 'ws-b-fdb-2', 'ws-b-sol-2')">Check</button>
+        <button class="btn secondary" onclick="revealSolution('ws-b-sol-2')">Reveal Answer</button>
+    </div>
+    <div id="ws-b-fdb-2" class="feedback"></div>
+    <div id="ws-b-sol-2" class="hidden"><p><b>Answer:</b> 20</p></div>
+</div>
+        
+
+<div class="qa-box">
+    <div class="qa-title"><span class="tag easy">EASY</span> B3. Mode of 5,5,6,7,7,7,8?</div>
+    <div class="qa-input-row">
+        <input id="ws-b-inp-3" type="text" placeholder="Type your final answer" />
+        <button class="btn" onclick="checkTypedAnswer('ws-b-inp-3', '7', 'ws-b-fdb-3', 'ws-b-sol-3')">Check</button>
+        <button class="btn secondary" onclick="revealSolution('ws-b-sol-3')">Reveal Answer</button>
+    </div>
+    <div id="ws-b-fdb-3" class="feedback"></div>
+    <div id="ws-b-sol-3" class="hidden"><p><b>Answer:</b> 7</p></div>
+</div>
+        
+
+<div class="qa-box">
+    <div class="qa-title"><span class="tag med">MED</span> B4. Write grouped-data median formula.</div>
+    <div class="qa-input-row">
+        <input id="ws-b-inp-4" type="text" placeholder="Type your final answer" />
+        <button class="btn" onclick="checkTypedAnswer('ws-b-inp-4', 'l + [(n/2−cf)/f]h', 'ws-b-fdb-4', 'ws-b-sol-4')">Check</button>
+        <button class="btn secondary" onclick="revealSolution('ws-b-sol-4')">Reveal Answer</button>
+    </div>
+    <div id="ws-b-fdb-4" class="feedback"></div>
+    <div id="ws-b-sol-4" class="hidden"><p><b>Answer:</b> l + [(n/2−cf)/f]h</p></div>
+</div>
+        
+
+<div class="qa-box">
+    <div class="qa-title"><span class="tag med">MED</span> B5. For grouped data, what is class mark?</div>
+    <div class="qa-input-row">
+        <input id="ws-b-inp-5" type="text" placeholder="Type your final answer" />
+        <button class="btn" onclick="checkTypedAnswer('ws-b-inp-5', '(lower limit + upper limit)/2', 'ws-b-fdb-5', 'ws-b-sol-5')">Check</button>
+        <button class="btn secondary" onclick="revealSolution('ws-b-sol-5')">Reveal Answer</button>
+    </div>
+    <div id="ws-b-fdb-5" class="feedback"></div>
+    <div id="ws-b-sol-5" class="hidden"><p><b>Answer:</b> (lower limit + upper limit)/2</p></div>
+</div>
+        
+
+<div class="qa-box">
+    <div class="qa-title"><span class="tag med">MED</span> B6. Cumulative frequency purpose in data analysis?</div>
+    <div class="qa-input-row">
+        <input id="ws-b-inp-6" type="text" placeholder="Type your final answer" />
+        <button class="btn" onclick="checkTypedAnswer('ws-b-inp-6', 'Find median class and create ogive curve.', 'ws-b-fdb-6', 'ws-b-sol-6')">Check</button>
+        <button class="btn secondary" onclick="revealSolution('ws-b-sol-6')">Reveal Answer</button>
+    </div>
+    <div id="ws-b-fdb-6" class="feedback"></div>
+    <div id="ws-b-sol-6" class="hidden"><p><b>Answer:</b> Find median class and create ogive curve.</p></div>
+</div>
+        
+
+<div class="qa-box">
+    <div class="qa-title"><span class="tag hard">HARD</span> B7. When to use step deviation mean?</div>
+    <div class="qa-input-row">
+        <input id="ws-b-inp-7" type="text" placeholder="Type your final answer" />
+        <button class="btn" onclick="checkTypedAnswer('ws-b-inp-7', 'When class marks are large, for faster calculation.', 'ws-b-fdb-7', 'ws-b-sol-7')">Check</button>
+        <button class="btn secondary" onclick="revealSolution('ws-b-sol-7')">Reveal Answer</button>
+    </div>
+    <div id="ws-b-fdb-7" class="feedback"></div>
+    <div id="ws-b-sol-7" class="hidden"><p><b>Answer:</b> When class marks are large, for faster calculation.</p></div>
+</div>
+        
+
+<div class="qa-box">
+    <div class="qa-title"><span class="tag hard">HARD</span> B8. Construct frequency polygon from histogram.</div>
+    <div class="qa-input-row">
+        <input id="ws-b-inp-8" type="text" placeholder="Type your final answer" />
+        <button class="btn" onclick="checkTypedAnswer('ws-b-inp-8', 'Join midpoints of top sides of histogram rectangles.', 'ws-b-fdb-8', 'ws-b-sol-8')">Check</button>
+        <button class="btn secondary" onclick="revealSolution('ws-b-sol-8')">Reveal Answer</button>
+    </div>
+    <div id="ws-b-fdb-8" class="feedback"></div>
+    <div id="ws-b-sol-8" class="hidden"><p><b>Answer:</b> Join midpoints of top sides of histogram rectangles.</p></div>
+</div>
+        
+
+<div class="qa-box">
+    <div class="qa-title"><span class="tag hard">HARD</span> B9. For 5 values, median position. For 6 values, median position.</div>
+    <div class="qa-input-row">
+        <input id="ws-b-inp-9" type="text" placeholder="Type your final answer" />
+        <button class="btn" onclick="checkTypedAnswer('ws-b-inp-9', 'Position = (5+1)/2=3rd | Position = average of 3rd and 4th values', 'ws-b-fdb-9', 'ws-b-sol-9')">Check</button>
+        <button class="btn secondary" onclick="revealSolution('ws-b-sol-9')">Reveal Answer</button>
+    </div>
+    <div id="ws-b-fdb-9" class="feedback"></div>
+    <div id="ws-b-sol-9" class="hidden"><p><b>Answer:</b> Position = (5+1)/2=3rd | Position = average of 3rd and 4th values</p></div>
+</div>
+        
+        </section>
+
+        <section class="card" style="margin-top:16px;">
+            <h3>Quick Formula + Error Revision</h3>
+            <div class="formula-box"><ul class="list"><li>Median = l + [(n/2−cf)/f]h</li><li>Mean (step deviation): x̄ = a + (Σf_i u_i/Σf_i)h</li></ul></div>
+            <h4 style="margin-top:14px;">Common mistakes to avoid</h4>
+            <ul class="list"><li>Choosing wrong median class from cumulative frequency.</li><li>Ignoring class marks in grouped mean.</li></ul>
+        </section>
+
+        <section class="card" style="margin-top:16px;">
+            <h3>Self-Check Checklist</h3>
+            <ul class="list">
+                <li>Completed all Section A questions without seeing steps first.</li>
+                <li>Completed at least 2 mixed-difficulty questions correctly.</li>
+                <li>Reviewed all boxed items and formulas once more.</li>
+                <li>Logged mistakes in your tracker for next-day correction.</li>
+            </ul>
+        </section>
+    </main>
+
+    <script src="../../assets/app.js"></script>
+</body>
+</html>

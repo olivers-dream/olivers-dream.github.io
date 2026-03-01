@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>📖 First Flight — Oliver's Dream</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+</head>
+<body>
+  <header class="header">
+    <a href="../index.html" class="brand-bar"><img src="../assets/logo.svg" alt="Oliver's Dream" class="site-logo"><div class="brand-text"><span class="brand-name">Oliver's Dream</span><span class="brand-motto">The road less travelled</span></div></a><h1>📖 First Flight</h1>
+    <p>9 Chapters | Mind maps + Solved practice | Centum target</p>
+  </header>
+
+  <main class="container">
+    <div class="top-tabs">
+      <a href="../index.html">🏠 Dashboard</a>
+      <a href="../schedule.html">📅 Schedule</a>
+      <a href="../tracker.html">✏️ Tracker</a>
+    </div>
+    <nav class="nav">
+      <a href="../maths/index.html">📐 Maths</a>
+      <a href="../science/index.html">🔬 Science</a>
+      <a href="../geography/index.html">🌍 Geography</a>
+      <a href="../civics/index.html">🏛️ Civics</a>
+      <a href="../history/index.html">📜 History</a>
+      <a href="../economics/index.html">💰 Economics</a>
+      <a href="index.html" class="active">📖 First Flight</a>
+      <a href="../footprints/index.html">👣 Footprints</a>
+      <a href="../words_expressions/index.html">✍️ Words &amp; Expressions</a>
+    </nav>
+
+    <section class="card">
+      <h3>How to use each chapter page (2-3 hours)</h3>
+      <ul class="list">
+        <li>Read <b>Simple Explanation</b> and <b>Analogy</b> first.</li>
+        <li>Solve <b>Worked Examples</b> without seeing solution.</li>
+        <li>Attempt <b>Practice Set</b> (easy, medium, hard).</li>
+        <li>Use <b>Imagine &amp; Visualize</b> to picture hard ideas.</li>
+        <li>Mark chapter complete only after scoring 90%+ in self-test.</li>
+      </ul>
+    </section>
+
+    <section class="card" style="margin-bottom:16px;">
+      <h3>First Flight Progress</h3>
+      <div class="kpi" id="progressText">0 / 9 completed</div>
+      <div class="progress-wrap"><div class="progress" id="progressBar"></div></div>
+    </section>
+
+    <section class="grid" style="margin-top:16px;" id="chapterGrid"></section>
+  </main>
+
+  <script src="../assets/app.js"></script>
+  <script>
+    const chapters = [
+      ['ff-01', '01 - A Letter to God | Dust of Snow & Fire and Ice', 'chapter-01-a-letter-to-god.html'],
+      ['ff-02', '02 - Nelson Mandela: Long Walk to Freedom | A Tiger in the Zoo', 'chapter-02-nelson-mandela.html'],
+      ['ff-03', '03 - Two Stories about Flying | How to Tell Wild Animals', 'chapter-03-two-stories-about-flying.html'],
+      ['ff-04', '04 - From the Diary of Anne Frank | Amanda', 'chapter-04-from-the-diary-of-anne-frank.html'],
+      ['ff-05', '05 - Glimpses of India | The Trees', 'chapter-05-glimpses-of-india.html'],
+      ['ff-06', '06 - Mijbil the Otter | Fog', 'chapter-06-mijbil-the-otter.html'],
+      ['ff-07', '07 - Madam Rides the Bus | The Tale of Custard the Dragon', 'chapter-07-madam-rides-the-bus.html'],
+      ['ff-08', '08 - The Sermon at Benares | For Anne Gregory', 'chapter-08-the-sermon-at-benares.html'],
+      ['ff-09', '09 - The Proposal (A Play by Anton Chekhov)', 'chapter-09-the-proposal.html']
+    ];
+    const grid = document.getElementById('chapterGrid');
+    const progress = getChapterProgress();
+    chapters.forEach(([id, title, href]) => {
+      const done = !!progress[id];
+      const card = document.createElement('article');
+      card.className = 'card';
+      card.innerHTML = `
+        <h3>${title}</h3>
+        <p>Status: <span class="tag ${done ? 'easy' : 'med'}">${done ? 'Completed' : 'In Progress'}</span></p>
+        <a class="btn" href="${href}">Open Chapter</a>
+      `;
+      grid.appendChild(card);
+    });
+    const stats = calculateSubjectStats('ff', 9);
+    document.getElementById('progressText').textContent = `${stats.done} / ${stats.total} completed`;
+    document.getElementById('progressBar').style.width = `${stats.percent}%`;
+  </script>
+</body>
+</html>

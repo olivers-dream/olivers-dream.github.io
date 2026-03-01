@@ -1,0 +1,7 @@
+# Python / dev files (not needed for the live site)
+data/
+__pycache__/
+*.py
+*.pyc
+.venv/
+.DS_Store
