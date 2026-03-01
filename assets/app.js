@@ -1,21 +1,5 @@
 /* ===== Oliver's Study Portal — Core Engine + Gamification ===== */
 
-/* --- Wisdom Quote Banner (injected on every page) --- */
-(function injectWisdomQuote() {
-  const banner = document.createElement('div');
-  banner.className = 'wisdom-banner';
-  banner.innerHTML = '\u201CThe fear of the Lord is the beginning of wisdom\u201D <span class="wisdom-ref">\u2014 Prov 9:10</span>';
-  const main = document.querySelector('main.container');
-  if (main) {
-    main.insertBefore(banner, main.firstChild);
-  } else {
-    const header = document.querySelector('header.header');
-    if (header && header.nextElementSibling) {
-      header.parentNode.insertBefore(banner, header.nextElementSibling);
-    }
-  }
-})();
-
 /* >>>>>> LAUNCH CONFIG <<<<<< */
 const LAUNCH_DATE = '2026-03-16';   // Production start date
 const RESET_FLAG_KEY = 'study_portal_reset_done_v1';
