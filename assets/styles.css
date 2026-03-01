@@ -177,7 +177,7 @@ a:hover { color: #22d3ee; }
   );
   transform: translateY(-50%);
 }
-/* Car emoji driving left→right */
+/* Car emoji driving left→right (flipped to face right) */
 .brand-road::after {
   content: '🚗';
   position: absolute;
@@ -187,6 +187,7 @@ a:hover { color: #22d3ee; }
   line-height: 1;
   animation: carDrive 3s linear infinite;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.7));
+  transform: scaleX(-1);
 }
 @keyframes carDrive {
   0%   { left: -14px; opacity: 0; }
