@@ -85,6 +85,16 @@
       </div>
     </section>
 
+    <!-- Exploration Mode Banner (shown by JS when isExplorationMode() is true) -->
+    <section id="exploreBanner" class="explore-banner stagger" style="display:none;" aria-label="Exploration Mode">
+      <div class="explore-rocket">&#128640;</div>
+      <div class="explore-body">
+        <h3 class="explore-title">Exploration Mode</h3>
+        <p class="explore-msg">Portal launches in <strong><span id="countdown">?</span> days</strong> &mdash; explore freely and get familiar with everything!</p>
+      </div>
+      <div class="explore-badge">PRE-LAUNCH</div>
+    </section>
+
     <!-- ── 2. YEARLY JOURNEY (NEW) ── -->
     <section class="card journey-roadmap stagger" aria-label="Yearly Journey">
       <div class="journey-top">
@@ -151,7 +161,16 @@
       </div>
     </section>
 
-    <!-- ── 3. WEEKLY QUESTS (NEW) ── -->
+    <!-- ── 3. TOTAL STUDY HOURS ── -->
+    <section class="grid stagger">
+      <article class="card">
+        <h3>&#9203; Total Study Hours</h3>
+        <div class="kpi" id="hoursDone">0 hrs</div>
+        <p class="footer-note">Target: 500+ focused hours before exams</p>
+      </article>
+    </section>
+
+    <!-- ── 4. WEEKLY QUESTS (NEW) ── -->
     <section class="weekly-quests stagger" aria-label="Weekly Quests">
       <div class="section-header">
         <h2 class="section-title">&#9876;&#65039; Weekly Quests</h2>
@@ -331,24 +350,7 @@
       </div>
     </section>
 
-    <!-- ── 5. BOTTOM STATS ── -->
-    <section class="grid stagger">
-      <article class="card">
-        <h3>&#9203; Total Study Hours</h3>
-        <div class="kpi" id="hoursDone">0 hrs</div>
-        <p class="footer-note">Target: 500+ focused hours before exams</p>
-      </article>
-    </section>
 
-    <!-- Exploration Mode Banner (shown by JS when isExplorationMode() is true) -->
-    <section id="exploreBanner" class="explore-banner stagger" style="display:none;" aria-label="Exploration Mode">
-      <div class="explore-rocket">&#128640;</div>
-      <div class="explore-body">
-        <h3 class="explore-title">Exploration Mode</h3>
-        <p class="explore-msg">Portal launches in <strong><span id="countdown">?</span> days</strong> &mdash; explore freely and get familiar with everything!</p>
-      </div>
-      <div class="explore-badge">PRE-LAUNCH</div>
-    </section>
 
   </main>
 
