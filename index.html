@@ -8,45 +8,76 @@
 </head>
 <body>
 
+  <!-- ============================================================
+       MOBILE-ONLY BOTTOM NAV (fixed, z-index 100)
+       Hidden on desktop via CSS — replaces sidebar + top-tabs
+  ============================================================ -->
+  <nav class="bottom-nav" aria-label="Mobile navigation">
+    <a href="index.html"            class="bottom-nav-item active"><span class="bnav-icon">&#127968;</span><span class="bnav-label">Home</span></a>
+    <a href="schedule.html"         class="bottom-nav-item"><span class="bnav-icon">&#128197;</span><span class="bnav-label">Schedule</span></a>
+    <a href="tracker.html"          class="bottom-nav-item"><span class="bnav-icon">&#9998;</span><span class="bnav-label">Tracker</span></a>
+    <a href="maths/index.html"      class="bottom-nav-item"><span class="bnav-icon">&#128208;</span><span class="bnav-label">Maths</span></a>
+    <a href="science/index.html"    class="bottom-nav-item"><span class="bnav-icon">&#128300;</span><span class="bnav-label">Science</span></a>
+  </nav>
+
+  <!-- ============================================================
+       HEADER
+  ============================================================ -->
   <header class="header">
-    <a href="index.html" class="brand-bar"><img src="assets/logo.svg" alt="Oliver's Dream" class="site-logo"><div class="brand-text"><span class="brand-name">Oliver's Dream</span><span class="brand-motto">The road less travelled<span class="brand-road"><span class="road-flag">🏁</span></span></span></div></a>
+    <a href="index.html" class="brand-bar">
+      <img src="assets/logo.svg" alt="Oliver's Dream" class="site-logo">
+      <div class="brand-text">
+        <span class="brand-name">Oliver's Dream</span>
+        <span class="brand-motto">The road less travelled<span class="brand-road"><span class="road-flag">&#127937;</span></span></span>
+      </div>
+    </a>
     <h1>Dashboard</h1>
-    <p>Dream big, study smart — your board exam journey starts here</p>
+    <p>Dream big, study smart &mdash; your board exam journey starts here</p>
     <div class="header-stats">
-      <span class="level-badge" id="levelBadge">⭐ Beginner</span>
-      <span class="stat-pill">🔥 Streak: <span class="val" id="streakVal">0</span></span>
-      <span class="stat-pill">⚡ XP: <span class="val" id="xpVal">0</span></span>
+      <span class="level-badge" id="levelBadge">&#11088; Beginner</span>
+      <span class="stat-pill"><span class="streak-flame" id="streakFlame">&#128293;</span> Streak: <span class="val" id="streakVal">0</span> days</span>
+      <span class="stat-pill">&#9889; XP: <span class="val" id="xpVal">0</span></span>
     </div>
     <div style="display:flex;justify-content:center;margin-top:8px;">
-      <div class="xp-bar-wrap">
-        <div class="xp-bar-fill" id="xpBar" style="width:0%"></div>
-      </div>
+      <div class="xp-bar-wrap"><div class="xp-bar-fill" id="xpBar" style="width:0%"></div></div>
     </div>
   </header>
 
+  <!-- ============================================================
+       MAIN LAYOUT
+  ============================================================ -->
   <main class="container">
-    <div class="wisdom-banner">&ldquo;The fear of the Lord is the beginning of wisdom&rdquo; <span class="wisdom-ref">&mdash; Prov 9:10</span></div>
-    <div class="top-tabs">
-      <a href="index.html" class="active">🏠 Dashboard</a>
-      <a href="schedule.html">📅 Schedule</a>
-      <a href="tracker.html">✏️ Tracker</a>
+
+    <!-- Wisdom Banner (full-width, grid-col 1/-1) -->
+    <div class="wisdom-banner">
+      &ldquo;The fear of the Lord is the beginning of wisdom&rdquo;
+      <span class="wisdom-ref">&mdash; Prov 9:10</span>
     </div>
-    <nav class="nav">
-      <a href="maths/index.html">📐 Maths</a>
-      <a href="science/index.html">🔬 Science</a>
-      <a href="geography/index.html">🌍 Geography</a>
-      <a href="civics/index.html">🏛️ Civics</a>
-      <a href="history/index.html">📜 History</a>
-      <a href="economics/index.html">💰 Economics</a>
-      <a href="first_flight/index.html">📖 First Flight</a>
-      <a href="footprints/index.html">👣 Footprints</a>
-      <a href="words_expressions/index.html">✍️ Words &amp; Expressions</a>
+
+    <!-- Page Tabs (desktop) -->
+    <div class="top-tabs">
+      <a href="index.html" class="active">&#127968; Dashboard</a>
+      <a href="schedule.html">&#128197; Schedule</a>
+      <a href="tracker.html">&#9998;&#65039; Tracker</a>
+    </div>
+
+    <!-- Sidebar Nav (desktop only — hidden on mobile) -->
+    <nav class="nav" aria-label="Subject navigation">
+      <a href="maths/index.html">&#128208; Maths</a>
+      <a href="science/index.html">&#128300; Science</a>
+      <a href="geography/index.html">&#127757; Geography</a>
+      <a href="civics/index.html">&#127963;&#65039; Civics</a>
+      <a href="history/index.html">&#128220; History</a>
+      <a href="economics/index.html">&#128176; Economics</a>
+      <a href="first_flight/index.html">&#128214; First Flight</a>
+      <a href="footprints/index.html">&#128099; Footprints</a>
+      <a href="words_expressions/index.html">&#9997;&#65039; Words &amp; Expressions</a>
     </nav>
 
-    <!-- Greeting + Quote (top panel) -->
+    <!-- ── 1. GREETING + QUOTE ── -->
     <section class="greeting-quote-bar stagger">
       <div class="greeting-side">
-        <h3 id="greeting">Good Day, Oliver! 🚀</h3>
+        <h3 id="greeting">Good Day, Oliver! &#128640;</h3>
         <div id="todayFocus"></div>
       </div>
       <div class="quote-side">
@@ -54,121 +85,271 @@
       </div>
     </section>
 
-    <!-- Overall Progress Ring -->
-    <div style="display:flex;justify-content:center;margin:16px 0 24px;">
-      <div class="progress-ring-wrap">
-        <svg width="140" height="140" viewBox="0 0 140 140">
-          <circle cx="70" cy="70" r="60" stroke="rgba(255,255,255,0.06)" stroke-width="10" fill="none"/>
-          <circle id="progressRing" cx="70" cy="70" r="60"
-            stroke="url(#ringGrad)" stroke-width="10" fill="none"
-            stroke-linecap="round"
-            stroke-dasharray="377" stroke-dashoffset="377"
-            transform="rotate(-90 70 70)"
-            style="transition:stroke-dashoffset 1s ease"/>
-          <defs>
-            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#8b5cf6"/>
-              <stop offset="100%" stop-color="#06b6d4"/>
-            </linearGradient>
-          </defs>
-          <text x="70" y="66" text-anchor="middle" fill="#e2e8f0" font-size="26" font-weight="800" id="ringPct">0%</text>
-          <text x="70" y="84" text-anchor="middle" fill="#94a3b8" font-size="11">Overall</text>
-        </svg>
+    <!-- ── 2. YEARLY JOURNEY (NEW) ── -->
+    <section class="card journey-roadmap stagger" aria-label="Yearly Journey">
+      <div class="journey-top">
+        <div class="journey-top-text">
+          <h2 class="section-title">&#128506;&#65039; The Yearly Journey</h2>
+          <p class="journey-sub" id="journeySub">Phase I &mdash; Building your Foundation</p>
+        </div>
+        <!-- Overall Progress Ring (IDs preserved for existing script) -->
+        <div class="progress-ring-wrap journey-ring">
+          <svg width="96" height="96" viewBox="0 0 140 140">
+            <circle cx="70" cy="70" r="60" stroke="rgba(255,255,255,0.06)" stroke-width="10" fill="none"/>
+            <circle id="progressRing" cx="70" cy="70" r="60"
+              stroke="url(#ringGrad)" stroke-width="10" fill="none"
+              stroke-linecap="round"
+              stroke-dasharray="377" stroke-dashoffset="377"
+              transform="rotate(-90 70 70)"
+              style="transition:stroke-dashoffset 1s ease"/>
+            <defs>
+              <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#8b5cf6"/>
+                <stop offset="100%" stop-color="#06b6d4"/>
+              </linearGradient>
+            </defs>
+            <text x="70" y="66" text-anchor="middle" fill="#e2e8f0" font-size="26" font-weight="800" id="ringPct">0%</text>
+            <text x="70" y="84" text-anchor="middle" fill="#94a3b8" font-size="11">Overall</text>
+          </svg>
+        </div>
       </div>
-    </div>
 
-    <!-- Exploration Banner (visible before launch) -->
-    <section class="card stagger" id="exploreBanner" style="margin-bottom:20px;display:none;border:1px solid rgba(139,92,246,0.4);background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(6,182,212,0.08));text-align:center;padding:24px 20px;">
-      <h3>🚀 Exploration Mode</h3>
-      <p style="margin-top:8px;">Board exams in <strong id="countdown"></strong> days — keep exploring!</p>
+      <!-- Phase roadmap nodes -->
+      <div class="roadmap-track" role="list">
+        <div class="phase-node active" role="listitem" title="Phase I: Foundation (Mar–Sep)">
+          <div class="phase-circle">I</div>
+          <div class="phase-label">Foundation</div>
+          <div class="phase-sub">Mar&ndash;Sep</div>
+        </div>
+        <div class="phase-connector" aria-hidden="true"></div>
+        <div class="phase-node" role="listitem" title="Phase II: Mastery (Oct–Nov)">
+          <div class="phase-circle">II</div>
+          <div class="phase-label">Mastery</div>
+          <div class="phase-sub">Oct&ndash;Nov</div>
+        </div>
+        <div class="phase-connector" aria-hidden="true"></div>
+        <div class="phase-node" role="listitem" title="Phase III: Revision (Dec–Jan)">
+          <div class="phase-circle">III</div>
+          <div class="phase-label">Revision</div>
+          <div class="phase-sub">Dec&ndash;Jan</div>
+        </div>
+        <div class="phase-connector" aria-hidden="true"></div>
+        <div class="phase-node" role="listitem" title="Phase IV: Final Sprint (Feb)">
+          <div class="phase-circle">IV</div>
+          <div class="phase-label">Final Sprint</div>
+          <div class="phase-sub">Feb</div>
+        </div>
+      </div>
+
+      <!-- Year-long mastery bar -->
+      <div class="year-level-bar-wrap">
+        <div class="year-level-bar-fill" id="yearLevelFill" style="width:0%"></div>
+      </div>
+      <div class="year-level-stats">
+        <span>Year Mastery: <strong id="yearPct">0%</strong></span>
+        <span id="yearChapters">0 / 76 chapters complete</span>
+      </div>
     </section>
 
-    <!-- Subject Cards -->
-    <section class="grid">
-      <article class="card stagger" data-subject="maths">
-        <h3>📐 Maths</h3>
-        <div class="kpi" id="mathDone">0 / 14</div>
-        <div class="progress-wrap"><div id="mathBar" class="progress"></div></div>
-        <p class="footer-note">14 chapters — algebra, geometry, trig & more</p>
-      </article>
+    <!-- ── 3. WEEKLY QUESTS (NEW) ── -->
+    <section class="weekly-quests stagger" aria-label="Weekly Quests">
+      <div class="section-header">
+        <h2 class="section-title">&#9876;&#65039; Weekly Quests</h2>
+        <span class="quest-week-label" id="weekLabel">This Week</span>
+      </div>
+      <!-- Quest cards injected by JS -->
+      <div class="quest-grid" id="questGrid"></div>
+    </section>
 
-      <article class="card stagger" data-subject="science">
-        <h3>🔬 Science</h3>
-        <div class="kpi" id="scienceDone">0 / 13</div>
-        <div class="progress-wrap"><div id="scienceBar" class="progress"></div></div>
-        <p class="footer-note">13 chapters — chemistry, physics, biology</p>
-      </article>
+    <!-- ── 4. SUBJECT SKILL CARDS (ENHANCED) ── -->
+    <section class="skills-section stagger" aria-label="Subject Skills">
+      <h2 class="section-title" style="margin-bottom:16px;">&#127918; Subject Skills</h2>
+      <div class="grid">
 
-      <article class="card stagger" data-subject="geography">
-        <h3>🌍 Geography</h3>
-        <div class="kpi" id="geoDone">0 / 7</div>
-        <div class="progress-wrap"><div id="geoBar" class="progress"></div></div>
-        <p class="footer-note">7 chapters — Contemporary India II</p>
-      </article>
+        <article class="card skill-card stagger" data-subject="maths">
+          <div class="skill-card-header">
+            <div class="skill-icon-wrap">&#128208;</div>
+            <div class="skill-meta">
+              <h3>Maths</h3>
+              <span class="mastery-label" id="mathMastery">Novice</span>
+            </div>
+            <div class="skill-kpi" id="mathDone">0 / 14</div>
+          </div>
+          <div class="progress-wrap"><div id="mathBar" class="progress"></div></div>
+          <div class="skill-xp-row">
+            <span class="skill-xp-label">Mastery XP</span>
+            <span class="skill-xp-pct" id="mathPct">0%</span>
+          </div>
+          <p class="footer-note">14 chapters &mdash; algebra, geometry, trig &amp; more</p>
+          <a href="maths/index.html" class="btn skill-btn">Train &#8594;</a>
+        </article>
 
-      <article class="card stagger" data-subject="civics">
-        <h3>🏛️ Civics</h3>
-        <div class="kpi" id="civDone">0 / 5</div>
-        <div class="progress-wrap"><div id="civBar" class="progress"></div></div>
-        <p class="footer-note">5 chapters — Democratic Politics II</p>
-      </article>
+        <article class="card skill-card stagger" data-subject="science">
+          <div class="skill-card-header">
+            <div class="skill-icon-wrap">&#128300;</div>
+            <div class="skill-meta">
+              <h3>Science</h3>
+              <span class="mastery-label" id="scienceMastery">Novice</span>
+            </div>
+            <div class="skill-kpi" id="scienceDone">0 / 13</div>
+          </div>
+          <div class="progress-wrap"><div id="scienceBar" class="progress"></div></div>
+          <div class="skill-xp-row">
+            <span class="skill-xp-label">Mastery XP</span>
+            <span class="skill-xp-pct" id="sciencePct">0%</span>
+          </div>
+          <p class="footer-note">13 chapters &mdash; chemistry, physics, biology</p>
+          <a href="science/index.html" class="btn skill-btn">Train &#8594;</a>
+        </article>
 
-      <article class="card stagger" data-subject="history">
-        <h3>📜 History</h3>
-        <div class="kpi" id="histDone">0 / 5</div>
-        <div class="progress-wrap"><div id="histBar" class="progress"></div></div>
-        <p class="footer-note">5 chapters — India & the Contemporary World II</p>
-      </article>
+        <article class="card skill-card stagger" data-subject="geography">
+          <div class="skill-card-header">
+            <div class="skill-icon-wrap">&#127757;</div>
+            <div class="skill-meta">
+              <h3>Geography</h3>
+              <span class="mastery-label" id="geoMastery">Novice</span>
+            </div>
+            <div class="skill-kpi" id="geoDone">0 / 7</div>
+          </div>
+          <div class="progress-wrap"><div id="geoBar" class="progress"></div></div>
+          <div class="skill-xp-row">
+            <span class="skill-xp-label">Mastery XP</span>
+            <span class="skill-xp-pct" id="geoPct">0%</span>
+          </div>
+          <p class="footer-note">7 chapters &mdash; Contemporary India II</p>
+          <a href="geography/index.html" class="btn skill-btn">Train &#8594;</a>
+        </article>
 
-      <article class="card stagger" data-subject="economics">
-        <h3>💰 Economics</h3>
-        <div class="kpi" id="econDone">0 / 5</div>
-        <div class="progress-wrap"><div id="econBar" class="progress"></div></div>
-        <p class="footer-note">5 chapters — Understanding Economic Development</p>
-      </article>
+        <article class="card skill-card stagger" data-subject="civics">
+          <div class="skill-card-header">
+            <div class="skill-icon-wrap">&#127963;&#65039;</div>
+            <div class="skill-meta">
+              <h3>Civics</h3>
+              <span class="mastery-label" id="civMastery">Novice</span>
+            </div>
+            <div class="skill-kpi" id="civDone">0 / 5</div>
+          </div>
+          <div class="progress-wrap"><div id="civBar" class="progress"></div></div>
+          <div class="skill-xp-row">
+            <span class="skill-xp-label">Mastery XP</span>
+            <span class="skill-xp-pct" id="civPct">0%</span>
+          </div>
+          <p class="footer-note">5 chapters &mdash; Democratic Politics II</p>
+          <a href="civics/index.html" class="btn skill-btn">Train &#8594;</a>
+        </article>
 
-      <article class="card stagger" data-subject="first_flight">
-        <h3>📖 First Flight</h3>
-        <div class="kpi" id="ffDone">0 / 9</div>
-        <div class="progress-wrap"><div id="ffBar" class="progress"></div></div>
-        <p class="footer-note">9 chapters — prose &amp; poetry</p>
-      </article>
+        <article class="card skill-card stagger" data-subject="history">
+          <div class="skill-card-header">
+            <div class="skill-icon-wrap">&#128220;</div>
+            <div class="skill-meta">
+              <h3>History</h3>
+              <span class="mastery-label" id="histMastery">Novice</span>
+            </div>
+            <div class="skill-kpi" id="histDone">0 / 5</div>
+          </div>
+          <div class="progress-wrap"><div id="histBar" class="progress"></div></div>
+          <div class="skill-xp-row">
+            <span class="skill-xp-label">Mastery XP</span>
+            <span class="skill-xp-pct" id="histPct">0%</span>
+          </div>
+          <p class="footer-note">5 chapters &mdash; India &amp; the Contemporary World II</p>
+          <a href="history/index.html" class="btn skill-btn">Train &#8594;</a>
+        </article>
 
-      <article class="card stagger" data-subject="footprints">
-        <h3>👣 Footprints without Feet</h3>
-        <div class="kpi" id="fpDone">0 / 9</div>
-        <div class="progress-wrap"><div id="fpBar" class="progress"></div></div>
-        <p class="footer-note">9 supplementary reader stories</p>
-      </article>
+        <article class="card skill-card stagger" data-subject="economics">
+          <div class="skill-card-header">
+            <div class="skill-icon-wrap">&#128176;</div>
+            <div class="skill-meta">
+              <h3>Economics</h3>
+              <span class="mastery-label" id="econMastery">Novice</span>
+            </div>
+            <div class="skill-kpi" id="econDone">0 / 5</div>
+          </div>
+          <div class="progress-wrap"><div id="econBar" class="progress"></div></div>
+          <div class="skill-xp-row">
+            <span class="skill-xp-label">Mastery XP</span>
+            <span class="skill-xp-pct" id="econPct">0%</span>
+          </div>
+          <p class="footer-note">5 chapters &mdash; Understanding Economic Development</p>
+          <a href="economics/index.html" class="btn skill-btn">Train &#8594;</a>
+        </article>
 
-      <article class="card stagger" data-subject="words_expressions">
-        <h3>✍️ Words &amp; Expressions II</h3>
-        <div class="kpi" id="weDone">0 / 9</div>
-        <div class="progress-wrap"><div id="weBar" class="progress"></div></div>
-        <p class="footer-note">9 units — vocabulary, grammar &amp; writing</p>
-      </article>
+        <article class="card skill-card stagger" data-subject="first_flight">
+          <div class="skill-card-header">
+            <div class="skill-icon-wrap">&#128214;</div>
+            <div class="skill-meta">
+              <h3>First Flight</h3>
+              <span class="mastery-label" id="ffMastery">Novice</span>
+            </div>
+            <div class="skill-kpi" id="ffDone">0 / 9</div>
+          </div>
+          <div class="progress-wrap"><div id="ffBar" class="progress"></div></div>
+          <div class="skill-xp-row">
+            <span class="skill-xp-label">Mastery XP</span>
+            <span class="skill-xp-pct" id="ffPct">0%</span>
+          </div>
+          <p class="footer-note">9 chapters &mdash; prose &amp; poetry</p>
+          <a href="first_flight/index.html" class="btn skill-btn">Train &#8594;</a>
+        </article>
 
-      <article class="card stagger">
-        <h3>⏱️ Total Study Hours</h3>
+        <article class="card skill-card stagger" data-subject="footprints">
+          <div class="skill-card-header">
+            <div class="skill-icon-wrap">&#128099;</div>
+            <div class="skill-meta">
+              <h3>Footprints</h3>
+              <span class="mastery-label" id="fpMastery">Novice</span>
+            </div>
+            <div class="skill-kpi" id="fpDone">0 / 9</div>
+          </div>
+          <div class="progress-wrap"><div id="fpBar" class="progress"></div></div>
+          <div class="skill-xp-row">
+            <span class="skill-xp-label">Mastery XP</span>
+            <span class="skill-xp-pct" id="fpPct">0%</span>
+          </div>
+          <p class="footer-note">9 supplementary reader stories</p>
+          <a href="footprints/index.html" class="btn skill-btn">Train &#8594;</a>
+        </article>
+
+        <article class="card skill-card stagger" data-subject="words_expressions">
+          <div class="skill-card-header">
+            <div class="skill-icon-wrap">&#9997;&#65039;</div>
+            <div class="skill-meta">
+              <h3>Words &amp; Expressions II</h3>
+              <span class="mastery-label" id="weMastery">Novice</span>
+            </div>
+            <div class="skill-kpi" id="weDone">0 / 9</div>
+          </div>
+          <div class="progress-wrap"><div id="weBar" class="progress"></div></div>
+          <div class="skill-xp-row">
+            <span class="skill-xp-label">Mastery XP</span>
+            <span class="skill-xp-pct" id="wePct">0%</span>
+          </div>
+          <p class="footer-note">9 units &mdash; vocabulary, grammar &amp; writing</p>
+          <a href="words_expressions/index.html" class="btn skill-btn">Train &#8594;</a>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ── 5. BOTTOM STATS ── -->
+    <section class="grid stagger">
+      <article class="card">
+        <h3>&#9203; Total Study Hours</h3>
         <div class="kpi" id="hoursDone">0 hrs</div>
         <p class="footer-note">Target: 500+ focused hours before exams</p>
       </article>
-
-      <article class="card stagger">
-        <h3>🗺️ Roadmap</h3>
-        <ul class="list">
-          <li>Phase 1 (Mar–Sep): Concept Foundation</li>
-          <li>Phase 2 (Oct–Nov): Revision Cycle 1</li>
-          <li>Phase 3 (Dec–Jan): Intensive Tests</li>
-          <li>Phase 4 (Feb): Final Sprint</li>
-        </ul>
-      </article>
     </section>
+
+    <!-- Hidden exploration banner (kept for JS compatibility — do not remove) -->
+    <div id="exploreBanner" style="display:none;"><span id="countdown"></span></div>
+
   </main>
 
   <script src="assets/app.js"></script>
   <script>
-    // ---- Populate subject stats ----
+    // ═══════════════════════════════════════════════════════════
+    // EXISTING STATE LOGIC — unchanged calls into app.js
+    // ═══════════════════════════════════════════════════════════
     const mathS  = calculateMathStats(14);
     const sciS   = calculateScienceStats(13);
     const geoS   = calculateSubjectStats('geo', 7);
@@ -200,78 +381,192 @@
     document.getElementById('fpBar').style.width       = fpS.percent    + '%';
     document.getElementById('weBar').style.width       = weS.percent    + '%';
 
-    // Overall progress ring
     const totalDone  = mathS.doneMath + sciS.doneScience + geoS.done + civS.done + histS.done + econS.done + ffS.done + fpS.done + weS.done;
     const totalAll   = 76;
     const overallPct = Math.round((totalDone / totalAll) * 100);
-    const circumference = 2 * Math.PI * 60; // 377
+    const circumference = 2 * Math.PI * 60;
     document.getElementById('ringPct').textContent = overallPct + '%';
-    setTimeout(() => {
+    setTimeout(function() {
       document.getElementById('progressRing').style.strokeDashoffset =
         circumference - (circumference * overallPct / 100);
     }, 300);
 
-    // ---- Gamification ----
     const xpData = getXPData();
-    document.getElementById('levelBadge').textContent = '⭐ ' + xpData.level;
+    document.getElementById('levelBadge').textContent = '\u2B50 ' + xpData.level;
     document.getElementById('streakVal').textContent  = xpData.streak;
     document.getElementById('xpVal').textContent      = xpData.xp;
     document.getElementById('xpBar').style.width      = xpData.xpProgress + '%';
-
     if (xpData.justLeveledUp) { launchConfetti(); }
 
-    // ---- Greeting ----
-    const hour = new Date().getHours();
-    let greet = 'Good Day';
-    if (hour < 6)        greet = '🌙 Night Owl Mode';
-    else if (hour < 12)  greet = '☀️ Good Morning';
-    else if (hour < 17)  greet = '🌤️ Good Afternoon';
-    else if (hour < 21)  greet = '🌆 Good Evening';
-    else                 greet = '🌙 Night Owl Mode';
-    document.getElementById('greeting').textContent = greet + ', Oliver! 🚀';
+    var hour = new Date().getHours();
+    var greet = 'Good Day';
+    if (hour < 6)        greet = '\uD83C\uDF19 Night Owl Mode';
+    else if (hour < 12)  greet = '\u2600\uFE0F Good Morning';
+    else if (hour < 17)  greet = '\uD83C\uDF24\uFE0F Good Afternoon';
+    else if (hour < 21)  greet = '\uD83C\uDF06 Good Evening';
+    else                 greet = '\uD83C\uDF19 Night Owl Mode';
+    document.getElementById('greeting').textContent = greet + ', Oliver! \uD83D\uDE80';
 
-    // ---- Today's Focus ----
-    const dayFocus = [
-      'Sunday — rest day! Recharge for the week ahead 😎',
-      ['📐 Maths practice problems', '🔬 Science — read one chapter'],
-      ['🌍 Geography notes review', '🏛️ Civics — key terms revision'],
-      ['📐 Maths — solve worksheet', '📜 History — timeline practice'],
-      ['🔬 Science experiments & diagrams', '�👣 English — read a chapter + grammar unit'],
-      ['📐 Maths revision', '🔬 Science quick quiz', '💰 Economics case studies'],
-      'Saturday — light revision or take a break! 🎮'
+    var dayFocus = [
+      'Sunday \u2014 rest day! Recharge for the week ahead \uD83D\uDE0E',
+      ['\uD83D\uDCD0 Maths practice problems', '\uD83D\uDD2C Science \u2014 read one chapter'],
+      ['\uD83C\uDF0D Geography notes review', '\uD83C\uDFDB\uFE0F Civics \u2014 key terms revision'],
+      ['\uD83D\uDCD0 Maths \u2014 solve worksheet', '\uD83D\uDCDC History \u2014 timeline practice'],
+      ['\uD83D\uDD2C Science experiments & diagrams', '\uD83D\uDC63 English \u2014 read a chapter + grammar unit'],
+      ['\uD83D\uDCD0 Maths revision', '\uD83D\uDD2C Science quick quiz', '\uD83D\uDCB0 Economics case studies'],
+      'Saturday \u2014 light revision or take a break! \uD83C\uDFAE'
     ];
-    const today = new Date().getDay();
-    const focusEl = document.getElementById('todayFocus');
-    const items = dayFocus[today];
+    var today   = new Date().getDay();
+    var focusEl = document.getElementById('todayFocus');
+    var items   = dayFocus[today];
     if (Array.isArray(items)) {
-      focusEl.innerHTML = items.map(i => '<div class="focus-item">' + i + '</div>').join('');
+      focusEl.innerHTML = items.map(function(i) { return '<div class="focus-item">' + i + '</div>'; }).join('');
     } else {
       focusEl.innerHTML = '<div class="focus-item">' + items + '</div>';
     }
 
-    // ---- Random Quote ----
-    const quotes = [
+    var quotes = [
       "Push yourself, because no one else is going to do it for you.",
       "Success is the sum of small efforts repeated day in and day out.",
-      "Don't watch the clock; do what it does. Keep going.",
+      "Don\u2019t watch the clock; do what it does. Keep going.",
       "The secret of getting ahead is getting started.",
-      "It always seems impossible until it's done.",
+      "It always seems impossible until it\u2019s done.",
       "Dream big. Start small. Act now.",
       "Your only limit is your mind.",
       "A little progress each day adds up to big results.",
       "Focus on being productive, not busy.",
-      "Believe you can and you're halfway there.",
+      "Believe you can and you\u2019re halfway there.",
       "Small daily improvements are the key to staggering long-term results.",
       "Education is the passport to the future."
     ];
     document.getElementById('quoteText').textContent = quotes[Math.floor(Math.random() * quotes.length)];
 
-    // ---- Exploration banner ----
     if (isExplorationMode()) {
-      const banner = document.getElementById('exploreBanner');
+      var banner = document.getElementById('exploreBanner');
       banner.style.display = 'block';
       document.getElementById('countdown').textContent = daysUntilLaunch();
     }
+
+    // ═══════════════════════════════════════════════════════════
+    // NEW UI LOGIC — presentation layer additions only
+    // ═══════════════════════════════════════════════════════════
+
+    // Mastery level labels
+    function getMasteryLevel(pct) {
+      if (pct === 0)  return 'Novice';
+      if (pct < 25)   return 'Apprentice';
+      if (pct < 50)   return 'Journeyman';
+      if (pct < 75)   return 'Expert';
+      if (pct < 100)  return 'Master';
+      return 'Grandmaster \u2728';
+    }
+    var masteryMap = [
+      ['mathMastery',    'mathPct',    mathS.percent],
+      ['scienceMastery', 'sciencePct', sciS.percent],
+      ['geoMastery',     'geoPct',     geoS.percent],
+      ['civMastery',     'civPct',     civS.percent],
+      ['histMastery',    'histPct',    histS.percent],
+      ['econMastery',    'econPct',    econS.percent],
+      ['ffMastery',      'ffPct',      ffS.percent],
+      ['fpMastery',      'fpPct',      fpS.percent],
+      ['weMastery',      'wePct',      weS.percent]
+    ];
+    masteryMap.forEach(function(row) {
+      var mEl = document.getElementById(row[0]);
+      var pEl = document.getElementById(row[1]);
+      if (mEl) mEl.textContent = getMasteryLevel(row[2]);
+      if (pEl) pEl.textContent = row[2] + '%';
+    });
+
+    // Dynamic streak flame intensity
+    var streak  = xpData.streak;
+    var flameEl = document.getElementById('streakFlame');
+    if (flameEl) {
+      if (streak >= 30)      flameEl.classList.add('blazing');
+      else if (streak >= 14) flameEl.classList.add('hot');
+      else if (streak >= 5)  flameEl.classList.add('warm');
+    }
+
+    // Yearly journey progress bar
+    setTimeout(function() {
+      document.getElementById('yearLevelFill').style.width = overallPct + '%';
+    }, 400);
+    document.getElementById('yearPct').textContent      = overallPct + '%';
+    document.getElementById('yearChapters').textContent = totalDone + ' / ' + totalAll + ' chapters complete';
+
+    // Phase label (auto-detects by calendar month)
+    var currentMonth = new Date().getMonth(); // 0=Jan … 11=Dec
+    var phaseLabel = 'Phase I \u2014 Building your Foundation';
+    if (currentMonth >= 9 && currentMonth <= 10) phaseLabel = 'Phase II \u2014 Deepening your Mastery';
+    else if (currentMonth === 11 || currentMonth === 0) phaseLabel = 'Phase III \u2014 Intensive Revision';
+    else if (currentMonth === 1)  phaseLabel = 'Phase IV \u2014 Final Sprint. You\u2019ve got this!';
+    document.getElementById('journeySub').textContent = phaseLabel;
+
+    // Week label (Mon – Sun)
+    var now = new Date();
+    var dayOfWeek = now.getDay(); // 0=Sun
+    var monday = new Date(now);
+    monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7));
+    var sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    var fmtDate = function(d) { return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }); };
+    document.getElementById('weekLabel').textContent = fmtDate(monday) + ' \u2013 ' + fmtDate(sunday);
+
+    // Weekly quests — data-driven, progress stored in localStorage
+    var QUESTS = [
+      { id: 'wq_math_ch1',  icon: '\uD83D\uDCD0', subject: 'maths',   name: 'Real Numbers \u2014 Master the Basics',        total: 3, xp: 50 },
+      { id: 'wq_sci_ch1',   icon: '\uD83D\uDD2C', subject: 'science', name: 'Chemical Reactions \u2014 Equations Practice',  total: 2, xp: 40 },
+      { id: 'wq_hist_ch1',  icon: '\uD83D\uDCDC', subject: 'history', name: 'Rise of Nationalism \u2014 Timeline Map',       total: 1, xp: 30 },
+      { id: 'wq_eng_ch1',   icon: '\uD83D\uDCD6', subject: 'english', name: 'A Letter to God \u2014 Read &amp; Annotate',    total: 1, xp: 25 }
+    ];
+
+    function getQP(id)    { return parseInt(localStorage.getItem('quest_' + id) || '0', 10); }
+    function setQP(id, v) { localStorage.setItem('quest_' + id, String(v)); }
+
+    var questGrid = document.getElementById('questGrid');
+    QUESTS.forEach(function(q) {
+      var progress = getQP(q.id);
+      var pct      = Math.round((progress / q.total) * 100);
+      var done     = progress >= q.total;
+      var unitWord = q.total === 1 ? 'exercise' : 'exercises';
+
+      var card = document.createElement('div');
+      card.className = 'quest-card' + (done ? ' completed' : '');
+
+      card.innerHTML =
+        '<div class="quest-icon-box">' + q.icon + '</div>' +
+        '<div class="quest-body">' +
+          '<div class="quest-name">' + q.name + '</div>' +
+          '<div class="quest-meta">' + progress + ' / ' + q.total + ' ' + unitWord + '</div>' +
+          '<div class="quest-bar-wrap"><div class="quest-bar" style="width:' + pct + '%"></div></div>' +
+        '</div>' +
+        '<div class="quest-right">' +
+          '<div class="quest-xp">+' + q.xp + ' XP</div>' +
+          (done
+            ? '<div class="quest-check">\u2713</div>'
+            : '<button class="quest-tap" title="Mark one exercise complete">+1</button>') +
+        '</div>';
+
+      if (!done) {
+        card.querySelector('.quest-tap').addEventListener('click', function(e) {
+          e.stopPropagation();
+          var cur = getQP(q.id);
+          if (cur >= q.total) return;
+          var newVal  = cur + 1;
+          setQP(q.id, newVal);
+          var newPct  = Math.round((newVal / q.total) * 100);
+          card.querySelector('.quest-meta').textContent = newVal + ' / ' + q.total + ' ' + unitWord;
+          card.querySelector('.quest-bar').style.width  = newPct + '%';
+          if (newVal >= q.total) {
+            card.classList.add('completed');
+            card.querySelector('.quest-right').innerHTML =
+              '<div class="quest-xp">+' + q.xp + ' XP</div><div class="quest-check">\u2713</div>';
+          }
+        });
+      }
+
+      questGrid.appendChild(card);
+    });
   </script>
 </body>
 </html>
