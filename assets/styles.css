@@ -1522,3 +1522,83 @@ tr.today-row td {
   .skill-icon-wrap    { width: 30px; height: 30px; font-size: 1rem; }
   .quest-card         { padding: 10px 10px; gap: 10px; }
 }
+
+
+/* ================================================================
+   EXPLORATION MODE BANNER
+================================================================ */
+.explore-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 22px;
+  background: linear-gradient(135deg, rgba(139,92,246,0.14), rgba(6,182,212,0.10));
+  border: 1px solid rgba(139,92,246,0.35);
+  border-radius: var(--radius);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+/* Animated shimmer sweep */
+.explore-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.04) 50%, transparent 60%);
+  animation: exploreSweep 3s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes exploreSweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.explore-rocket {
+  font-size: 2rem;
+  flex-shrink: 0;
+  animation: rocketBob 2s ease-in-out infinite;
+}
+@keyframes rocketBob {
+  0%, 100% { transform: translateY(0) rotate(-5deg); }
+  50%       { transform: translateY(-5px) rotate(5deg); }
+}
+
+.explore-body  { flex: 1; min-width: 0; }
+
+.explore-title {
+  font-size: 1rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #c084fc, #22d3ee);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  margin-bottom: 4px;
+}
+
+.explore-msg {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+.explore-msg strong { color: #e2e8f0; }
+
+.explore-badge {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #c084fc;
+  background: rgba(139,92,246,0.15);
+  border: 1px solid rgba(139,92,246,0.35);
+  padding: 4px 10px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .explore-banner   { flex-wrap: wrap; gap: 10px; padding: 14px 16px; }
+  .explore-badge    { display: none; }
+  .explore-title    { font-size: 0.92rem; }
+  .explore-msg      { font-size: 0.8rem; }
+}

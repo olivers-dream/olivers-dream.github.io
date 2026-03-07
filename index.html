@@ -340,8 +340,15 @@
       </article>
     </section>
 
-    <!-- Hidden exploration banner (kept for JS compatibility — do not remove) -->
-    <div id="exploreBanner" style="display:none;"><span id="countdown"></span></div>
+    <!-- Exploration Mode Banner (shown by JS when isExplorationMode() is true) -->
+    <section id="exploreBanner" class="explore-banner stagger" style="display:none;" aria-label="Exploration Mode">
+      <div class="explore-rocket">&#128640;</div>
+      <div class="explore-body">
+        <h3 class="explore-title">Exploration Mode</h3>
+        <p class="explore-msg">Portal launches in <strong><span id="countdown">?</span> days</strong> &mdash; explore freely and get familiar with everything!</p>
+      </div>
+      <div class="explore-badge">PRE-LAUNCH</div>
+    </section>
 
   </main>
 
