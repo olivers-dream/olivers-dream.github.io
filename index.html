@@ -533,6 +533,19 @@
     function getQP(id)    { return parseInt(localStorage.getItem('quest_' + weekKey + '_' + id) || '0', 10); }
     function setQP(id, v) { localStorage.setItem('quest_' + weekKey + '_' + id, String(v)); }
 
+    // One-time migration: carry over old quest progress to week-scoped keys
+    if (!localStorage.getItem('quest_migration_done')) {
+      QUESTS.forEach(function(q) {
+        var oldVal = parseInt(localStorage.getItem('quest_' + q.id) || '0', 10);
+        if (oldVal > 0) {
+          setQP(q.id, oldVal);
+          if (oldVal >= q.total) awardQuestXP(q.id, q.xp);
+          localStorage.removeItem('quest_' + q.id);
+        }
+      });
+      localStorage.setItem('quest_migration_done', 'yes');
+    }
+
     var questGrid = document.getElementById('questGrid');
     QUESTS.forEach(function(q) {
       var progress = getQP(q.id);
