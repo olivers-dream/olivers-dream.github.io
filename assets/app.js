@@ -1,7 +1,7 @@
 /* ===== Oliver's Study Portal — Core Engine + Gamification ===== */
 
 /* >>>>>> LAUNCH CONFIG <<<<<< */
-const LAUNCH_DATE = '2026-03-16';   // Production start date
+const LAUNCH_DATE = '2026-03-15';   // Production start date (already passed — reset complete)
 const RESET_FLAG_KEY = 'study_portal_reset_done_v1';
 
 const STORAGE_KEYS = {
