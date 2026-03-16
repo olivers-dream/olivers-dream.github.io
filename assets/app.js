@@ -252,6 +252,25 @@ function awardXP(hours, isChapter) {
   return gained;
 }
 
+/* ---------- Quest XP ---------- */
+function awardQuestXP(questId, xpAmount) {
+  const weekKey = getWeekKey();
+  const flagKey = 'quest_xp_awarded_' + weekKey + '_' + questId;
+  if (localStorage.getItem(flagKey) === 'yes') return 0; // already awarded this week
+  localStorage.setItem(flagKey, 'yes');
+  setXP(getXP() + xpAmount);
+  return xpAmount;
+}
+
+/* ---------- Week Key (Monday date of current week) ---------- */
+function getWeekKey() {
+  var now = new Date();
+  var dayOfWeek = now.getDay(); // 0=Sun
+  var monday = new Date(now);
+  monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7));
+  return formatDate(monday);
+}
+
 function getXPData() {
   const xp = getXP();
   const streak = getStreak();

@@ -529,14 +529,18 @@
       { id: 'wq_eng_ch1',   icon: '\uD83D\uDCD6', subject: 'english', name: 'A Letter to God \u2014 Read &amp; Annotate',    total: 1, xp: 25 }
     ];
 
-    function getQP(id)    { return parseInt(localStorage.getItem('quest_' + id) || '0', 10); }
-    function setQP(id, v) { localStorage.setItem('quest_' + id, String(v)); }
+    var weekKey = getWeekKey();
+    function getQP(id)    { return parseInt(localStorage.getItem('quest_' + weekKey + '_' + id) || '0', 10); }
+    function setQP(id, v) { localStorage.setItem('quest_' + weekKey + '_' + id, String(v)); }
 
     var questGrid = document.getElementById('questGrid');
     QUESTS.forEach(function(q) {
       var progress = getQP(q.id);
       var pct      = Math.round((progress / q.total) * 100);
       var done     = progress >= q.total;
+
+      // Award XP for quests completed but not yet awarded (e.g. page refresh)
+      if (done) awardQuestXP(q.id, q.xp);
       var unitWord = q.total === 1 ? 'exercise' : 'exercises';
 
       var card = document.createElement('div');
@@ -570,6 +574,13 @@
             card.classList.add('completed');
             card.querySelector('.quest-right').innerHTML =
               '<div class="quest-xp">+' + q.xp + ' XP</div><div class="quest-check">\u2713</div>';
+            var gained = awardQuestXP(q.id, q.xp);
+            if (gained > 0) {
+              // Refresh XP display in the status bar
+              var xpData = getXPData();
+              var xpEl = document.getElementById('xpCount');
+              if (xpEl) xpEl.textContent = xpData.xp;
+            }
           }
         });
       }
