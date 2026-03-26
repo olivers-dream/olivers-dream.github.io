@@ -616,6 +616,21 @@ a:hover { color: #22d3ee; }
   background: linear-gradient(135deg, var(--orange), #d97706);
 }
 
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.status-box {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  color: var(--text);
+  line-height: 1.55;
+}
+
 /* ---- Form Elements ---- */
 input, select, textarea {
   width: 100%;

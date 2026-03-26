@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>☁️ Sync — Oliver's Dream</title>
+  <link rel="stylesheet" href="assets/styles.css"/>
+</head>
+<body>
+  <header class="header">
+    <a href="index.html" class="brand-bar"><img src="assets/logo.svg" alt="Oliver's Dream" class="site-logo"><div class="brand-text"><span class="brand-name">Oliver's Dream</span><span class="brand-motto">The road less travelled<span class="brand-road"><span class="road-flag">🏁</span></span></span></div></a>
+    <h1>☁️ Cloud Sync &amp; Backup</h1>
+    <p>Connect devices, migrate old progress, and keep one shared record</p>
+  </header>
+
+  <main class="container">
+    <div class="wisdom-banner">&ldquo;The fear of the Lord is the beginning of wisdom&rdquo; <span class="wisdom-ref">&mdash; Prov 9:10</span></div>
+
+    <div class="top-tabs">
+      <a href="index.html">🏠 Dashboard</a>
+      <a href="schedule.html">📅 Schedule</a>
+      <a href="tracker.html">✏️ Tracker</a>
+      <a href="sync.html" class="active">☁️ Sync</a>
+      <a href="parent.html">👨‍👦 Parent</a>
+    </div>
+
+    <nav class="nav">
+      <a href="index.html">🏠 Dashboard</a>
+      <a href="tracker.html">✏️ Tracker</a>
+      <a href="parent.html">👨‍👦 Parent View</a>
+      <a href="maths/index.html">📐 Maths</a>
+      <a href="science/index.html">🔬 Science</a>
+    </nav>
+
+    <section class="card">
+      <h3>How to move progress from the old computer</h3>
+      <ol class="list">
+        <li>Open this same `Sync` page on the child’s current computer.</li>
+        <li>Create or sign in to the same cloud account on both computers.</li>
+        <li>On the old computer, click `Push This Device To Cloud`.</li>
+        <li>On your computer, sign in with the same account. The latest progress will pull down automatically.</li>
+        <li>If both computers already have different progress, export a backup JSON from each one before pushing.</li>
+        <li>Then import the older backup here and merge it into the cloud record.</li>
+      </ol>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h3>Cloud Status</h3>
+        <div class="status-box" id="syncStatusBox">Checking cloud status...</div>
+        <p class="footer-note" id="syncStatusHint"></p>
+      </article>
+
+      <article class="card">
+        <h3>Device Label</h3>
+        <p class="footer-note">Useful when you push from the old computer and want to know which device updated the cloud record.</p>
+        <div class="form-row">
+          <div>
+            <label for="deviceLabel">This device name</label>
+            <input type="text" id="deviceLabel" placeholder="Example: Oliver Laptop"/>
+          </div>
+        </div>
+        <div class="action-row" style="margin-top:12px;">
+          <button class="btn secondary" id="saveDeviceLabel">Save Label</button>
+        </div>
+      </article>
+    </section>
+
+    <section class="card">
+      <h3>Cloud Account</h3>
+      <p class="footer-note">Use one family login on both computers. That keeps the same child progress available everywhere.</p>
+      <div class="form-row">
+        <div>
+          <label for="emailInput">Email</label>
+          <input type="email" id="emailInput" placeholder="family@example.com"/>
+        </div>
+        <div>
+          <label for="passwordInput">Password</label>
+          <input type="password" id="passwordInput" placeholder="At least 6 characters"/>
+        </div>
+      </div>
+      <div class="action-row" style="margin-top:12px;">
+        <button class="btn" id="createAccountBtn">Create Account</button>
+        <button class="btn secondary" id="signInBtn">Sign In</button>
+        <button class="btn secondary" id="signOutBtn">Sign Out</button>
+      </div>
+      <p class="footer-note" id="authMessage"></p>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h3>Cloud Actions</h3>
+        <div class="action-row">
+          <button class="btn" id="pushBtn">Push This Device To Cloud</button>
+          <button class="btn secondary" id="pullBtn">Pull Latest From Cloud</button>
+        </div>
+        <p class="footer-note">Use `Push` on the old computer first. Use `Pull` on any other device if you want to force-refresh immediately.</p>
+      </article>
+
+      <article class="card">
+        <h3>Backup Actions</h3>
+        <div class="action-row">
+          <button class="btn secondary" id="exportBtn">Export Backup JSON</button>
+          <button class="btn secondary" id="chooseImportBtn">Choose Backup File</button>
+          <button class="btn" id="importBtn">Import And Merge</button>
+        </div>
+        <input type="file" id="backupFile" accept="application/json" class="hidden"/>
+        <p class="footer-note" id="importFileName">No backup file selected.</p>
+      </article>
+    </section>
+
+    <section class="card">
+      <h3>Firebase Setup</h3>
+      <p class="footer-note">Cloud sync is ready in the portal, but it needs your Firebase project details once. Edit `Study_Portal/assets/cloud-config.js` and paste your Firebase web config there.</p>
+      <div class="status-box">
+        Enable `Email/Password` in Firebase Authentication and add the Firestore rules from `Study_Portal/FIREBASE_SETUP.md`.
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/app.js"></script>
+  <script>
+    const emailInput = document.getElementById('emailInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const authMessage = document.getElementById('authMessage');
+    const syncStatusBox = document.getElementById('syncStatusBox');
+    const syncStatusHint = document.getElementById('syncStatusHint');
+    const deviceLabelInput = document.getElementById('deviceLabel');
+    const backupFileInput = document.getElementById('backupFile');
+    const importFileName = document.getElementById('importFileName');
+
+    function showMessage(text) {
+      authMessage.textContent = text;
+    }
+
+    function renderSyncState() {
+      const state = getCloudSyncState();
+      syncStatusBox.textContent = state.message;
+      syncStatusHint.textContent = state.configured
+        ? (state.signedIn ? ('Signed in as ' + (state.email || state.uid)) : 'Firebase is configured. Sign in to connect devices.')
+        : 'Cloud config is still empty, so the portal is running in local-only mode.';
+      deviceLabelInput.value = getPreferredDeviceLabel();
+    }
+
+    document.getElementById('saveDeviceLabel').addEventListener('click', () => {
+      setPreferredDeviceLabel(deviceLabelInput.value);
+      renderSyncState();
+      showMessage('Device label saved.');
+    });
+
+    document.getElementById('createAccountBtn').addEventListener('click', async () => {
+      try {
+        showMessage('Creating account...');
+        await registerStudyPortalCloud(emailInput.value, passwordInput.value);
+        showMessage('Cloud account created. This device is now signed in.');
+      } catch (err) {
+        showMessage(err.message || 'Could not create the cloud account.');
+      }
+    });
+
+    document.getElementById('signInBtn').addEventListener('click', async () => {
+      try {
+        showMessage('Signing in...');
+        await signInStudyPortalCloud(emailInput.value, passwordInput.value);
+        showMessage('Signed in successfully.');
+      } catch (err) {
+        showMessage(err.message || 'Could not sign in.');
+      }
+    });
+
+    document.getElementById('signOutBtn').addEventListener('click', async () => {
+      try {
+        await signOutStudyPortalCloud();
+        showMessage('Signed out.');
+      } catch (err) {
+        showMessage(err.message || 'Could not sign out.');
+      }
+    });
+
+    document.getElementById('pushBtn').addEventListener('click', async () => {
+      try {
+        showMessage('Uploading this device to the cloud...');
+        await pushProgressToCloud();
+        showMessage('This device has been uploaded to the cloud.');
+      } catch (err) {
+        showMessage(err.message || 'Cloud upload failed.');
+      }
+    });
+
+    document.getElementById('pullBtn').addEventListener('click', async () => {
+      try {
+        showMessage('Pulling latest cloud progress...');
+        await pullProgressFromCloud();
+        showMessage('Latest cloud progress has been pulled.');
+      } catch (err) {
+        showMessage(err.message || 'Cloud pull failed.');
+      }
+    });
+
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      downloadProgressBackup();
+      showMessage('Backup exported.');
+    });
+
+    document.getElementById('chooseImportBtn').addEventListener('click', () => {
+      backupFileInput.click();
+    });
+
+    backupFileInput.addEventListener('change', () => {
+      const file = backupFileInput.files && backupFileInput.files[0];
+      importFileName.textContent = file ? ('Selected: ' + file.name) : 'No backup file selected.';
+    });
+
+    document.getElementById('importBtn').addEventListener('click', async () => {
+      const file = backupFileInput.files && backupFileInput.files[0];
+      if (!file) {
+        showMessage('Choose a backup file first.');
+        return;
+      }
+      try {
+        showMessage('Importing and merging backup...');
+        await importProgressBackupFile(file, { merge: true, pushAfterImport: true });
+        showMessage('Backup imported and merged.');
+      } catch (err) {
+        showMessage(err.message || 'Backup import failed.');
+      }
+    });
+
+    window.addEventListener('studyportal:sync-state', renderSyncState);
+    renderSyncState();
+  </script>
+</body>
+</html>

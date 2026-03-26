@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>👨‍👦 Parent View — Oliver's Dream</title>
+  <link rel="stylesheet" href="assets/styles.css"/>
+</head>
+<body>
+  <header class="header">
+    <a href="index.html" class="brand-bar"><img src="assets/logo.svg" alt="Oliver's Dream" class="site-logo"><div class="brand-text"><span class="brand-name">Oliver's Dream</span><span class="brand-motto">The road less travelled<span class="brand-road"><span class="road-flag">🏁</span></span></span></div></a>
+    <h1>👨‍👦 Parent Monitor</h1>
+    <p>Watch progress, hours, streaks, and recent study activity</p>
+  </header>
+
+  <main class="container">
+    <div class="wisdom-banner">&ldquo;The fear of the Lord is the beginning of wisdom&rdquo; <span class="wisdom-ref">&mdash; Prov 9:10</span></div>
+
+    <div class="top-tabs">
+      <a href="index.html">🏠 Dashboard</a>
+      <a href="schedule.html">📅 Schedule</a>
+      <a href="tracker.html">✏️ Tracker</a>
+      <a href="sync.html">☁️ Sync</a>
+      <a href="parent.html" class="active">👨‍👦 Parent</a>
+    </div>
+
+    <nav class="nav">
+      <a href="index.html">🏠 Dashboard</a>
+      <a href="sync.html">☁️ Sync</a>
+      <a href="tracker.html">✏️ Tracker</a>
+      <a href="maths/index.html">📐 Maths</a>
+      <a href="science/index.html">🔬 Science</a>
+    </nav>
+
+    <section class="card">
+      <h3>Cloud Status</h3>
+      <div class="status-box" id="parentSyncStatus">Checking sync status...</div>
+      <p class="footer-note" id="parentSyncHint"></p>
+      <div class="action-row" style="margin-top:12px;">
+        <a href="sync.html" class="btn">Open Sync Page</a>
+        <button class="btn secondary" id="parentPullBtn">Pull Latest Now</button>
+        <button class="btn secondary" id="parentExportBtn">Export Backup</button>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h3>Total Chapters Done</h3>
+        <div class="kpi" id="overallChapters">0 / 76</div>
+        <p class="footer-note" id="overallPercent">0% complete</p>
+      </article>
+      <article class="card">
+        <h3>Total Study Hours</h3>
+        <div class="kpi" id="parentHours">0 hrs</div>
+        <p class="footer-note" id="parentEntries">0 log entries</p>
+      </article>
+      <article class="card">
+        <h3>Streak</h3>
+        <div class="kpi" id="parentStreak">0 days</div>
+        <p class="footer-note" id="parentLevel">Level: Beginner</p>
+      </article>
+      <article class="card">
+        <h3>Latest Study Day</h3>
+        <div class="kpi" id="latestDay">—</div>
+        <p class="footer-note" id="latestSubject">No activity yet</p>
+      </article>
+    </section>
+
+    <section class="card">
+      <h3>Subject Progress</h3>
+      <div class="grid" id="subjectGrid"></div>
+    </section>
+
+    <section class="card">
+      <h3>Recent Study Log</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Date</th><th>Subject</th><th>Hours</th><th>Notes</th><th>Time</th></tr>
+          </thead>
+          <tbody id="recentLogBody"></tbody>
+        </table>
+      </div>
+      <p class="footer-note" id="recentLogNote"></p>
+    </section>
+  </main>
+
+  <script src="assets/app.js"></script>
+  <script>
+    const SUBJECTS = [
+      { key: 'math', prefix: 'math', total: 14, label: 'Maths', icon: '📐' },
+      { key: 'sci', prefix: 'sci', total: 13, label: 'Science', icon: '🔬' },
+      { key: 'geo', prefix: 'geo', total: 7, label: 'Geography', icon: '🌍' },
+      { key: 'civ', prefix: 'civ', total: 5, label: 'Civics', icon: '🏛️' },
+      { key: 'hist', prefix: 'hist', total: 5, label: 'History', icon: '📜' },
+      { key: 'econ', prefix: 'econ', total: 5, label: 'Economics', icon: '💰' },
+      { key: 'ff', prefix: 'ff', total: 9, label: 'First Flight', icon: '📖' },
+      { key: 'fp', prefix: 'fp', total: 9, label: 'Footprints', icon: '👣' },
+      { key: 'we', prefix: 'we', total: 9, label: 'Words & Expressions', icon: '✍️' }
+    ];
+
+    function renderParentStatus() {
+      const sync = getCloudSyncState();
+      document.getElementById('parentSyncStatus').textContent = sync.message;
+      document.getElementById('parentSyncHint').textContent = sync.configured
+        ? (sync.signedIn ? ('Viewing cloud record for ' + (sync.email || sync.uid)) : 'Firebase is configured. Sign in on the Sync page to monitor the shared cloud record.')
+        : 'Cloud sync is not configured yet. This page currently shows only local browser data.';
+    }
+
+    function renderOverview() {
+      const xpData = getXPData();
+      const dailyLog = getDailyLog();
+      const progress = getChapterProgress();
+      const totalChapters = SUBJECTS.reduce((sum, subject) => sum + subject.total, 0);
+      const completed = Object.keys(progress).filter(key => progress[key]).length;
+      const totalHours = dailyLog.reduce((sum, entry) => sum + Number(entry.hours || 0), 0);
+      const latest = dailyLog[0];
+      const percent = totalChapters ? Math.round((completed / totalChapters) * 100) : 0;
+
+      document.getElementById('overallChapters').textContent = completed + ' / ' + totalChapters;
+      document.getElementById('overallPercent').textContent = percent + '% complete';
+      document.getElementById('parentHours').textContent = totalHours.toFixed(1) + ' hrs';
+      document.getElementById('parentEntries').textContent = dailyLog.length + ' log entries';
+      document.getElementById('parentStreak').textContent = xpData.streak + ' days';
+      document.getElementById('parentLevel').textContent = 'Level: ' + xpData.level + ' · XP: ' + xpData.xp;
+      document.getElementById('latestDay').textContent = latest ? friendlyDate(latest.date) : '—';
+      document.getElementById('latestSubject').textContent = latest
+        ? (latest.subject + ' · ' + latest.hours + ' hrs')
+        : 'No activity yet';
+    }
+
+    function renderSubjectGrid() {
+      const grid = document.getElementById('subjectGrid');
+      grid.innerHTML = '';
+
+      SUBJECTS.forEach(subject => {
+        const stats = calculateSubjectStats(subject.prefix, subject.total);
+        const article = document.createElement('article');
+        article.className = 'card';
+        article.innerHTML =
+          '<h3>' + subject.icon + ' ' + subject.label + '</h3>' +
+          '<div class="kpi">' + stats.done + ' / ' + stats.total + '</div>' +
+          '<div class="progress-wrap"><div class="progress" style="width:' + stats.percent + '%"></div></div>' +
+          '<p class="footer-note">' + stats.percent + '% complete</p>';
+        grid.appendChild(article);
+      });
+    }
+
+    function renderRecentLog() {
+      const tbody = document.getElementById('recentLogBody');
+      const note = document.getElementById('recentLogNote');
+      const entries = getDailyLog().slice(0, 12);
+
+      tbody.innerHTML = '';
+      if (!entries.length) {
+        const emptyRow = document.createElement('tr');
+        emptyRow.innerHTML = '<td colspan="5">No study log entries yet.</td>';
+        tbody.appendChild(emptyRow);
+        note.textContent = 'Recent activity will appear here after the first saved study session.';
+        return;
+      }
+
+      entries.forEach(entry => {
+        const row = document.createElement('tr');
+        row.innerHTML =
+          '<td>' + friendlyDate(entry.date) + '</td>' +
+          '<td>' + entry.subject + '</td>' +
+          '<td>' + entry.hours + '</td>' +
+          '<td>' + (entry.notes || '—') + '</td>' +
+          '<td>' + (entry.time || '—') + '</td>';
+        tbody.appendChild(row);
+      });
+
+      note.textContent = entries.length + ' latest entries shown.';
+    }
+
+    function renderParentPage() {
+      renderParentStatus();
+      renderOverview();
+      renderSubjectGrid();
+      renderRecentLog();
+    }
+
+    document.getElementById('parentPullBtn').addEventListener('click', async () => {
+      try {
+        await pullProgressFromCloud();
+      } catch (err) {
+        document.getElementById('parentSyncHint').textContent = err.message || 'Cloud pull failed.';
+      }
+    });
+
+    document.getElementById('parentExportBtn').addEventListener('click', () => {
+      downloadProgressBackup();
+    });
+
+    window.addEventListener('studyportal:sync-state', renderParentPage);
+    window.addEventListener('studyportal:data-changed', renderParentPage);
+    renderParentPage();
+  </script>
+</body>
+</html>
