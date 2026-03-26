@@ -238,6 +238,203 @@
     return candidates.length ? (candidates[candidates.length - 1].nextSibling || null) : null;
   }
 
+  function getMindMapDisplayWidth(svg) {
+    const viewBox = svg.getAttribute('viewBox');
+    if (viewBox) {
+      const parts = viewBox.trim().split(/\s+/).map(Number);
+      if (parts.length === 4 && Number.isFinite(parts[2])) {
+        return Math.max(1000, Math.min(2200, Math.round(parts[2] * 1.15)));
+      }
+    }
+
+    const bounds = svg.getBoundingClientRect();
+    if (bounds.width) {
+      return Math.max(1000, Math.min(2200, Math.round(bounds.width * 1.8)));
+    }
+
+    return 1400;
+  }
+
+  function buildMindMapBlob(svg) {
+    const clone = svg.cloneNode(true);
+    const viewBox = clone.getAttribute('viewBox');
+    if (viewBox) {
+      const parts = viewBox.trim().split(/\s+/).map(Number);
+      if (parts.length === 4) {
+        if (!clone.getAttribute('width') || /%/.test(clone.getAttribute('width'))) {
+          clone.setAttribute('width', parts[2]);
+        }
+        if (!clone.getAttribute('height') || /auto|%/.test(clone.getAttribute('height'))) {
+          clone.setAttribute('height', parts[3]);
+        }
+      }
+    }
+    if (!clone.getAttribute('xmlns')) {
+      clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    }
+    if (!clone.getAttribute('xmlns:xlink')) {
+      clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+    }
+
+    const source = new XMLSerializer().serializeToString(clone);
+    return new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n' + source], {
+      type: 'image/svg+xml;charset=utf-8'
+    });
+  }
+
+  function ensureMindMapLightbox() {
+    if (window.__studyPortalMindMapLightbox) return window.__studyPortalMindMapLightbox;
+
+    const lightbox = document.createElement('div');
+    lightbox.className = 'mind-map-lightbox';
+    lightbox.hidden = true;
+    lightbox.innerHTML =
+      '<div class="mind-map-lightbox__dialog" role="dialog" aria-modal="true" aria-labelledby="mindMapLightboxTitle">' +
+        '<div class="mind-map-lightbox__header">' +
+          '<div>' +
+            '<p class="enhancer-eyebrow">Mind Map Viewer</p>' +
+            '<h3 id="mindMapLightboxTitle">Mind Map</h3>' +
+            '<p class="mind-map-lightbox__meta" id="mindMapLightboxMeta"></p>' +
+          '</div>' +
+          '<div class="mind-map-lightbox__actions">' +
+            '<button type="button" class="btn secondary" id="mindMapLightboxOpenTab">Open In Tab</button>' +
+            '<button type="button" class="btn secondary" id="mindMapLightboxCloseBtn" data-close-mind-map>Close</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="mind-map-lightbox__canvas" id="mindMapLightboxCanvas"></div>' +
+        '<p class="mind-map-lightbox__caption" id="mindMapLightboxCaption">Scroll to inspect the full map. Press Esc to close.</p>' +
+      '</div>';
+    document.body.appendChild(lightbox);
+
+    const titleNode = lightbox.querySelector('#mindMapLightboxTitle');
+    const metaNode = lightbox.querySelector('#mindMapLightboxMeta');
+    const captionNode = lightbox.querySelector('#mindMapLightboxCaption');
+    const canvasNode = lightbox.querySelector('#mindMapLightboxCanvas');
+    const closeButton = lightbox.querySelector('#mindMapLightboxCloseBtn');
+    const openTabButton = lightbox.querySelector('#mindMapLightboxOpenTab');
+
+    let currentObjectUrl = '';
+    let lastFocused = null;
+
+    function clearObjectUrl() {
+      if (!currentObjectUrl) return;
+      URL.revokeObjectURL(currentObjectUrl);
+      currentObjectUrl = '';
+    }
+
+    function closeLightbox() {
+      lightbox.hidden = true;
+      document.body.classList.remove('mind-map-lightbox-open');
+      canvasNode.innerHTML = '';
+      clearObjectUrl();
+      if (lastFocused && typeof lastFocused.focus === 'function') {
+        lastFocused.focus();
+      }
+    }
+
+    function openLightbox(config) {
+      clearObjectUrl();
+      lastFocused = document.activeElement;
+
+      const image = document.createElement('img');
+      image.className = 'mind-map-lightbox__image';
+      image.alt = config.altText || 'Enlarged mind map';
+      image.style.width = config.displayWidth + 'px';
+      currentObjectUrl = URL.createObjectURL(buildMindMapBlob(config.svg));
+      image.src = currentObjectUrl;
+
+      canvasNode.innerHTML = '';
+      canvasNode.appendChild(image);
+      canvasNode.scrollTop = 0;
+      canvasNode.scrollLeft = 0;
+
+      titleNode.textContent = config.title || 'Mind Map';
+      metaNode.textContent = config.chapterTitle || pageTitle;
+      captionNode.textContent = config.caption || 'Scroll to inspect the full map. Press Esc to close.';
+
+      lightbox.hidden = false;
+      document.body.classList.add('mind-map-lightbox-open');
+      closeButton.focus();
+    }
+
+    lightbox.addEventListener('click', event => {
+      if (event.target === lightbox || event.target.closest('[data-close-mind-map]')) {
+        closeLightbox();
+      }
+    });
+
+    openTabButton.addEventListener('click', () => {
+      if (currentObjectUrl) {
+        window.open(currentObjectUrl, '_blank', 'noopener');
+      }
+    });
+
+    document.addEventListener('keydown', event => {
+      if (!lightbox.hidden && event.key === 'Escape') {
+        event.preventDefault();
+        closeLightbox();
+      }
+    });
+
+    window.__studyPortalMindMapLightbox = {
+      open: openLightbox,
+      close: closeLightbox
+    };
+    return window.__studyPortalMindMapLightbox;
+  }
+
+  function enhanceMindMaps() {
+    const lightbox = ensureMindMapLightbox();
+    document.querySelectorAll('.mind-map-wrap').forEach((wrap, index) => {
+      const svg = wrap.querySelector('svg');
+      if (!svg || wrap.dataset.zoomReady === 'true') return;
+
+      const article = wrap.closest('article, section, .card');
+      const heading = article ? article.querySelector('h3') : null;
+      const caption = article ? article.querySelector('.mind-map-caption') : null;
+      const title = heading ? heading.textContent.trim() : ('Mind Map ' + (index + 1));
+      const altText = pageTitle + ' - ' + title;
+      const displayWidth = getMindMapDisplayWidth(svg);
+
+      wrap.dataset.zoomReady = 'true';
+      wrap.classList.add('is-zoomable');
+      wrap.setAttribute('role', 'button');
+      wrap.setAttribute('tabindex', '0');
+      wrap.setAttribute('aria-label', 'Open enlarged mind map for ' + pageTitle);
+
+      if (!wrap.querySelector('.mind-map-zoom-pill')) {
+        const zoomPill = document.createElement('span');
+        zoomPill.className = 'mind-map-zoom-pill';
+        zoomPill.setAttribute('aria-hidden', 'true');
+        zoomPill.textContent = 'Click to enlarge';
+        wrap.appendChild(zoomPill);
+      }
+
+      const openViewer = () => {
+        lightbox.open({
+          svg,
+          title,
+          chapterTitle: pageTitle,
+          caption: (caption && caption.textContent.trim()) || 'Scroll to inspect the full map. Press Esc to close.',
+          altText,
+          displayWidth
+        });
+      };
+
+      wrap.addEventListener('click', event => {
+        if (event.target.closest('button, a, input, textarea, select, label')) return;
+        openViewer();
+      });
+
+      wrap.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openViewer();
+        }
+      });
+    });
+  }
+
   const quickCheckQuestions = [
     'I can explain the main idea of this page in my own words.',
     'I can solve or answer the key pattern without looking at the page.',
@@ -431,6 +628,7 @@
   }
 
   renderToolCards();
+  enhanceMindMaps();
 
   const markDoneButton = document.getElementById('markDone');
   if (markDoneButton) {
