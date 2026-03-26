@@ -1,0 +1,12 @@
+{
+  "name": "study-portal",
+  "private": true,
+  "scripts": {
+    "build:search-index": "node tools/build-search-index.js",
+    "validate:site": "node tools/validate-site.js",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}

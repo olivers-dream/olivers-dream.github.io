@@ -53,16 +53,24 @@ listFiles('worksheets/maths')
 
 assertIncludes('assets/app.js', 'study_portal_chapter_meta_v1', 'missing chapter meta storage key');
 assertIncludes('assets/app.js', 'study_portal_parent_goals_v1', 'missing parent goals storage key');
+assertIncludes('assets/app.js', 'study_portal_focus_sessions_v1', 'missing focus session storage key');
 assertIncludes('assets/app.js', 'queryProfilesForParentEmail', 'missing parent account query helper');
 assertIncludes('assets/content-tools.js', 'Quick Mastery Check', 'missing shared chapter enhancer content');
 assertIncludes('assets/content-tools.js', 'Must Memorize', 'missing shared memorization content');
 assertIncludes('assets/content-tools.js', 'chapter-sticky-progress', 'missing sticky chapter progress');
+assertIncludes('assets/content-tools.js', 'chapter-memory-bank.js', 'missing curated memory bank loader');
+assertIncludes('assets/chapter-memory-bank.js', 'window.STUDY_PORTAL_MEMORY_BANK', 'missing curated memory bank');
 assertIncludes('assets/search-tools.js', 'portalSearchInput', 'missing dashboard search script');
 assertIncludes('assets/search-index.js', 'window.STUDY_PORTAL_SEARCH_INDEX', 'missing generated search index');
 assertIncludes('index.html', 'portalSearchInput', 'missing dashboard search UI');
+assertIncludes('tracker.html', 'focusTimerCount', 'missing focus timer UI');
 assertIncludes('sync.html', 'Parent Viewer Access', 'missing parent email linking section');
 assertIncludes('parent.html', 'goalAlertBoard', 'missing parent alerts section');
 assertIncludes('parent.html', 'parentExportCsvBtn', 'missing parent report export buttons');
+assertIncludes('parent.html', 'subjectHeatmapGrid', 'missing parent heatmap section');
+assertIncludes('package.json', '@playwright/test', 'missing Playwright dependency');
+assertIncludes('playwright.config.js', 'python3 -m http.server 4173', 'missing Playwright web server config');
+assertIncludes('tests/e2e/portal.spec.js', 'parent page stays locked until the configured PIN is entered', 'missing parent lock e2e coverage');
 
 if (errors.length) {
   console.error('Validation failed:\n' + errors.map(item => '- ' + item).join('\n'));

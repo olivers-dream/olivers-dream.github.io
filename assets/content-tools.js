@@ -1,4 +1,8 @@
-(function chapterEnhancer() {
+(function chapterEnhancerBootstrap() {
+  const currentScript = document.currentScript;
+  const assetBase = currentScript && currentScript.src ? new URL('.', currentScript.src).href : '';
+
+  function runEnhancer() {
   const path = window.location.pathname || '';
   const isWorksheet = /worksheet-/.test(path);
   const isContentPage = /(chapter-|unit-|worksheet-)/.test(path);
@@ -28,6 +32,7 @@
     words_expressions: '#a855f7',
     worksheets: '#22c55e'
   }[subjectFolder] || '#8b5cf6';
+  const curatedEntry = ((window.STUDY_PORTAL_MEMORY_BANK || {})[chapterKey] || {});
 
   document.documentElement.style.setProperty('--page-accent', subjectAccent);
   document.body.dataset.subject = subjectFolder;
@@ -64,6 +69,10 @@
   }
 
   function collectLearningBullets() {
+    if (Array.isArray(curatedEntry.learn) && curatedEntry.learn.length) {
+      return curatedEntry.learn.slice(0, 4);
+    }
+
     const summarySection = getSummarySection();
     const bullets = Array.from(summarySection.querySelectorAll('li'))
       .map(item => item.textContent.trim())
@@ -79,6 +88,8 @@
   }
 
   function getRevisionSummary() {
+    if (curatedEntry.summary) return String(curatedEntry.summary);
+
     const summarySection = getSummarySection();
     const firstParagraph = Array.from(summarySection.querySelectorAll('p'))
       .map(item => item.textContent.trim())
@@ -87,6 +98,10 @@
   }
 
   function collectMustMemorizeItems(learningBullets) {
+    if (Array.isArray(curatedEntry.memorize) && curatedEntry.memorize.length) {
+      return curatedEntry.memorize.slice(0, 5);
+    }
+
     const candidates = [];
 
     Array.from(container.querySelectorAll('.formula-box')).forEach(box => {
@@ -349,4 +364,16 @@
       renderToolCards();
     });
   }
+  }
+
+  if (window.STUDY_PORTAL_MEMORY_BANK || !assetBase) {
+    runEnhancer();
+    return;
+  }
+
+  const memoryBankScript = document.createElement('script');
+  memoryBankScript.src = assetBase + 'chapter-memory-bank.js';
+  memoryBankScript.onload = runEnhancer;
+  memoryBankScript.onerror = runEnhancer;
+  document.head.appendChild(memoryBankScript);
 })();

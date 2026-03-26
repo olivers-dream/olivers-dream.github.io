@@ -148,6 +148,12 @@
       </section>
 
       <section class="card">
+        <h3>Subject Heatmap</h3>
+        <div class="subject-heatmap" id="subjectHeatmapGrid"></div>
+        <p class="footer-note" id="subjectHeatmapNote"></p>
+      </section>
+
+      <section class="card">
         <h3>Weekly Parent Plan</h3>
         <p class="footer-note">Set goals and remarks for the current week. In linked-parent mode this is saved against the child cloud record without changing the existing progress history.</p>
         <div class="form-row">
@@ -284,6 +290,7 @@
           const right = (b.date || '') + 'T' + (b.time || '00:00');
           return left < right ? 1 : (left > right ? -1 : 0);
         }),
+        focusSessions: getFocusSessions(),
         xp,
         streak: getStreak(),
         level: getLevelForXP(xp)
@@ -505,6 +512,7 @@
       const currentWeekPlan = getCurrentWeekPlan(snapshot.parentGoals);
       const weeklySeries = buildWeeklySeries(snapshot.dailyLog || [], 8);
       const currentWeek = weeklySeries[weeklySeries.length - 1] || { hours: 0 };
+      const focusMinutes = (snapshot.focusSessions || []).reduce((sum, item) => sum + Number(item.minutes || 0), 0);
       const subjectRows = SUBJECTS.map(subject => {
         const stats = getSubjectStatsFromSnapshot(snapshot, subject);
         return [subject.label, stats.done, stats.total, stats.percent + '%', stats.hours.toFixed(1), stats.averageQuiz + '%', stats.attentionCount];
@@ -515,6 +523,7 @@
         ['Summary', 'Generated At', new Date().toLocaleString('en-IN')],
         ['Summary', 'Total Chapters', Object.keys(snapshot.chapterProgress || {}).filter(key => snapshot.chapterProgress[key]).length],
         ['Summary', 'Total Hours', (snapshot.dailyLog || []).reduce((sum, entry) => sum + Number(entry.hours || 0), 0).toFixed(1)],
+        ['Summary', 'Focused Minutes', focusMinutes],
         ['Summary', 'Streak', snapshot.streak || 0],
         ['Summary', 'XP', snapshot.xp || 0],
         ['Weekly Plan', 'Week', currentWeekPlan.weekKey],
@@ -532,17 +541,26 @@
         rows.push(['Recent Log', friendlyDate(entry.date), entry.subject, Number(entry.hours || 0).toFixed(1), entry.notes || '', entry.time || '']);
       });
 
+      rows.push(['Focus Session', 'Date', 'Subject', 'Minutes', 'Cycle', '']);
+      (snapshot.focusSessions || []).slice(0, 20).forEach(session => {
+        rows.push(['Focus Session', friendlyDate(session.date), session.subject, session.minutes, session.cycleLabel || 'Focus Session', '']);
+      });
+
       downloadCsvFile('parent-study-report-' + formatDate(new Date()) + '.csv', rows);
     }
 
     function printParentPdfReport(snapshot) {
       const currentWeekPlan = getCurrentWeekPlan(snapshot.parentGoals);
+      const focusMinutes = (snapshot.focusSessions || []).reduce((sum, item) => sum + Number(item.minutes || 0), 0);
       const subjectCards = SUBJECTS.map(subject => {
         const stats = getSubjectStatsFromSnapshot(snapshot, subject);
         return '<tr><td>' + subject.label + '</td><td>' + stats.done + ' / ' + stats.total + '</td><td>' + stats.percent + '%</td><td>' + stats.hours.toFixed(1) + '</td><td>' + stats.averageQuiz + '%</td><td>' + stats.attentionCount + '</td></tr>';
       }).join('');
       const logRows = (snapshot.dailyLog || []).slice(0, 12).map(entry =>
         '<tr><td>' + friendlyDate(entry.date) + '</td><td>' + entry.subject + '</td><td>' + Number(entry.hours || 0).toFixed(1) + '</td><td>' + (entry.notes || '—') + '</td><td>' + (entry.time || '—') + '</td></tr>'
+      ).join('');
+      const focusRows = (snapshot.focusSessions || []).slice(0, 12).map(session =>
+        '<tr><td>' + friendlyDate(session.date) + '</td><td>' + session.subject + '</td><td>' + session.minutes + '</td><td>' + (session.cycleLabel || 'Focus Session') + '</td></tr>'
       ).join('');
 
       const reportWindow = window.open('', '_blank');
@@ -558,12 +576,14 @@
         '<p>Generated: ' + new Date().toLocaleString('en-IN') + '</p>' +
         '<div class="meta">' +
           '<div class="panel"><strong>Current Week Goal</strong><p>Hours target: ' + currentWeekPlan.hoursTarget + '</p><p>Chapter target: ' + currentWeekPlan.chaptersTarget + '</p><p>Remark: ' + (currentWeekPlan.remark || '—') + '</p></div>' +
-          '<div class="panel"><strong>Overall Progress</strong><p>XP: ' + (snapshot.xp || 0) + '</p><p>Streak: ' + (snapshot.streak || 0) + ' days</p><p>Total study entries: ' + (snapshot.dailyLog || []).length + '</p></div>' +
+          '<div class="panel"><strong>Overall Progress</strong><p>XP: ' + (snapshot.xp || 0) + '</p><p>Streak: ' + (snapshot.streak || 0) + ' days</p><p>Total study entries: ' + (snapshot.dailyLog || []).length + '</p><p>Focused minutes: ' + focusMinutes + '</p></div>' +
         '</div>' +
         '<h2>Subject Overview</h2>' +
         '<table><thead><tr><th>Subject</th><th>Progress</th><th>Percent</th><th>Hours</th><th>Quiz Avg</th><th>Flags</th></tr></thead><tbody>' + subjectCards + '</tbody></table>' +
         '<h2 style="margin-top:22px;">Recent Study Log</h2>' +
         '<table><thead><tr><th>Date</th><th>Subject</th><th>Hours</th><th>Notes</th><th>Time</th></tr></thead><tbody>' + logRows + '</tbody></table>' +
+        '<h2 style="margin-top:22px;">Recent Focus Sessions</h2>' +
+        '<table><thead><tr><th>Date</th><th>Subject</th><th>Minutes</th><th>Cycle</th></tr></thead><tbody>' + focusRows + '</tbody></table>' +
         '</body></html>'
       );
       reportWindow.document.close();
@@ -658,6 +678,50 @@
       document.getElementById('weeklyTrendNote').textContent = 'Shows the last ' + weeklySeries.length + ' study weeks ending with the current week.';
     }
 
+    function renderSubjectHeatmap(snapshot) {
+      const grid = document.getElementById('subjectHeatmapGrid');
+      const note = document.getElementById('subjectHeatmapNote');
+      const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const cutoffMs = Date.now() - (27 * 86400000);
+      const rows = SUBJECTS.map(subject => ({
+        subject,
+        values: [0, 0, 0, 0, 0, 0, 0]
+      }));
+      const rowMap = new Map(rows.map(item => [item.subject.prefix, item]));
+
+      (snapshot.dailyLog || []).forEach(entry => {
+        const entryDate = new Date((entry.date || '') + 'T00:00:00');
+        if (Number.isNaN(entryDate.getTime()) || entryDate.getTime() < cutoffMs) return;
+        const prefix = getSubjectPrefixFromEntry(entry.subject);
+        if (!rowMap.has(prefix)) return;
+        const dayIndex = (entryDate.getDay() + 6) % 7;
+        rowMap.get(prefix).values[dayIndex] += Number(entry.hours || 0);
+      });
+
+      (snapshot.focusSessions || []).forEach(session => {
+        const entryDate = new Date((session.date || '') + 'T00:00:00');
+        if (Number.isNaN(entryDate.getTime()) || entryDate.getTime() < cutoffMs) return;
+        const prefix = getSubjectPrefixFromEntry(session.subject);
+        if (!rowMap.has(prefix)) return;
+        const dayIndex = (entryDate.getDay() + 6) % 7;
+        rowMap.get(prefix).values[dayIndex] += Number(session.minutes || 0) / 60;
+      });
+
+      const maxValue = Math.max(1, ...rows.flatMap(item => item.values));
+      grid.innerHTML =
+        '<div class="heatmap-row heatmap-head"><div></div>' + dayLabels.map(label => '<div>' + label + '</div>').join('') + '</div>' +
+        rows.map(item =>
+          '<div class="heatmap-row">' +
+            '<div class="heatmap-subject">' + item.subject.icon + ' ' + item.subject.label + '</div>' +
+            item.values.map(value => {
+              const level = value === 0 ? 0 : Math.min(4, Math.max(1, Math.ceil((value / maxValue) * 4)));
+              return '<div class="heatmap-cell lvl-' + level + '" title="' + item.subject.label + ' · ' + value.toFixed(1) + ' hrs"></div>';
+            }).join('') +
+          '</div>'
+        ).join('');
+      note.textContent = 'Shows activity intensity from study log hours and focus sessions over the last 28 days.';
+    }
+
     function renderParentPlan(snapshot) {
       const normalized = normalizeParentPlan(snapshot.parentGoals);
       const currentWeekPlan = getCurrentWeekPlan(normalized);
@@ -682,11 +746,20 @@
           return updatedAt >= range.startMs && updatedAt < range.endMs;
         }).length;
       const latest = (snapshot.dailyLog || [])[0];
+      const latestFocus = (snapshot.focusSessions || [])[0];
       const inactivityThreshold = Math.max(1, Number(currentWeekPlan.inactivityThresholdDays || 3));
       let inactiveDays = 0;
       if (latest && latest.date) {
         inactiveDays = Math.floor((Date.now() - new Date(latest.date + 'T00:00:00').getTime()) / 86400000);
       }
+      let focusInactiveDays = 0;
+      if (latestFocus && latestFocus.date) {
+        focusInactiveDays = Math.floor((Date.now() - new Date(latestFocus.date + 'T00:00:00').getTime()) / 86400000);
+      }
+      const currentWeekFocusMinutes = (snapshot.focusSessions || [])
+        .filter(session => getMondayKey(session.date) === currentWeekPlan.weekKey)
+        .reduce((sum, session) => sum + Number(session.minutes || 0), 0);
+      const subjectLeaders = getStrongestAndWeakestSubjects(snapshot);
 
       const alerts = [];
       if (!latest) {
@@ -694,11 +767,19 @@
       } else if (inactiveDays >= inactivityThreshold) {
         alerts.push('No study activity for ' + inactiveDays + ' days.');
       }
+      if (!latestFocus) {
+        alerts.push('No focused study sessions recorded yet.');
+      } else if (focusInactiveDays >= inactivityThreshold + 1) {
+        alerts.push('No focus-timer session for ' + focusInactiveDays + ' days.');
+      }
       if (currentWeekPlan.hoursTarget > 0 && currentWeek.hours < currentWeekPlan.hoursTarget) {
         alerts.push('Weekly hours are behind target by ' + (currentWeekPlan.hoursTarget - currentWeek.hours).toFixed(1) + ' hrs.');
       }
       if (currentWeekPlan.chaptersTarget > 0 && chapterTouches < currentWeekPlan.chaptersTarget) {
         alerts.push('Only ' + chapterTouches + ' / ' + currentWeekPlan.chaptersTarget + ' chapters touched this week.');
+      }
+      if (subjectLeaders.weakest && subjectLeaders.weakest.stats.averageQuiz && subjectLeaders.weakest.stats.averageQuiz < 60) {
+        alerts.push(subjectLeaders.weakest.subject.label + ' quiz average is only ' + subjectLeaders.weakest.stats.averageQuiz + '%.');
       }
       if (currentWeekPlan.remark) {
         alerts.push('Parent remark: ' + currentWeekPlan.remark);
@@ -709,7 +790,8 @@
         : 'On track this week. No inactivity or goal alerts right now.';
       document.getElementById('goalSummaryNote').textContent =
         'Current week: ' + currentWeek.hours.toFixed(1) + ' / ' + currentWeekPlan.hoursTarget + ' hrs · ' +
-        chapterTouches + ' / ' + currentWeekPlan.chaptersTarget + ' chapters touched.';
+        chapterTouches + ' / ' + currentWeekPlan.chaptersTarget + ' chapters touched · ' +
+        currentWeekFocusMinutes + ' focus minutes.';
     }
 
     function renderSubjectGrid(snapshot) {
@@ -792,6 +874,7 @@
       renderParentStatus();
       renderOverview(snapshot);
       renderWeeklyAnalytics(snapshot);
+      renderSubjectHeatmap(snapshot);
       renderParentPlan(snapshot);
       renderGoalAlerts(snapshot);
       renderSubjectGrid(snapshot);

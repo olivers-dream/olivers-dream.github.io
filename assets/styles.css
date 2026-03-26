@@ -998,6 +998,61 @@ tr.today-row td {
   font-weight: 600;
 }
 
+.focus-timer-shell {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  padding: 18px;
+  margin: 14px 0;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(135deg, rgba(59,130,246,0.14), rgba(16,185,129,0.1));
+}
+
+.focus-timer-count {
+  font-size: clamp(2.2rem, 6vw, 3.4rem);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #f8fafc;
+}
+
+.subject-heatmap {
+  display: grid;
+  gap: 10px;
+}
+
+.heatmap-row {
+  display: grid;
+  grid-template-columns: minmax(170px, 1.4fr) repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  align-items: center;
+}
+
+.heatmap-head {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.heatmap-subject {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.heatmap-cell {
+  height: 26px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.03);
+}
+
+.heatmap-cell.lvl-0 { background: rgba(255,255,255,0.03); }
+.heatmap-cell.lvl-1 { background: rgba(125,211,252,0.18); }
+.heatmap-cell.lvl-2 { background: rgba(96,165,250,0.3); }
+.heatmap-cell.lvl-3 { background: rgba(59,130,246,0.46); }
+.heatmap-cell.lvl-4 { background: rgba(37,99,235,0.72); }
+
 /* ---- Q&A Boxes ---- */
 .qa-box {
   border: 1px solid var(--border);
@@ -1874,4 +1929,9 @@ tr.today-row td {
   .chapter-sticky-status { text-align: left; }
   .chapter-sticky-progress { top: 8px; padding: 10px 12px; }
   .search-result-card { padding: 12px 14px; }
+  .heatmap-row { grid-template-columns: minmax(110px, 1.2fr) repeat(7, minmax(0, 1fr)); gap: 6px; }
+  .heatmap-subject { font-size: 0.72rem; }
+  .heatmap-head { font-size: 0.62rem; }
+  .heatmap-cell { height: 22px; border-radius: 8px; }
+  .focus-timer-shell { padding: 14px; }
 }

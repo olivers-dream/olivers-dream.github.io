@@ -82,6 +82,61 @@
       <button class="btn secondary" onclick="exportLog()">📋 Export Log</button>
     </section>
 
+    <section class="grid" style="margin-bottom:16px;">
+      <article class="card">
+        <h3>⏱️ Focus Timer</h3>
+        <p class="footer-note">Run a Pomodoro-style focus session and save the completed session for reporting.</p>
+        <div class="form-row">
+          <div>
+            <label for="focusSubject">Subject</label>
+            <select id="focusSubject">
+              <option value="Maths">📐 Maths</option>
+              <option value="Science">🔬 Science</option>
+              <option value="Geography">🌍 Geography</option>
+              <option value="Civics">🏛️ Civics</option>
+              <option value="History">📜 History</option>
+              <option value="Economics">💰 Economics</option>
+              <option value="First Flight">📖 First Flight</option>
+              <option value="Footprints">👣 Footprints</option>
+              <option value="Words & Expressions">✍️ Words &amp; Expressions</option>
+            </select>
+          </div>
+          <div>
+            <label for="focusMinutes">Focus minutes</label>
+            <select id="focusMinutes">
+              <option value="15">15 min</option>
+              <option value="25" selected>25 min</option>
+              <option value="40">40 min</option>
+              <option value="50">50 min</option>
+            </select>
+          </div>
+        </div>
+        <div class="focus-timer-shell">
+          <div class="focus-timer-count" id="focusTimerCount">25:00</div>
+          <p class="footer-note" id="focusTimerMessage">Pick a duration and press Start Focus.</p>
+        </div>
+        <div class="action-row">
+          <button class="btn" id="focusStartBtn">Start Focus</button>
+          <button class="btn secondary" id="focusPauseBtn">Pause</button>
+          <button class="btn secondary" id="focusResetBtn">Reset</button>
+        </div>
+      </article>
+
+      <article class="card">
+        <h3>🎯 Focus Sessions</h3>
+        <div class="kpi" id="focusMinutesDone">0 min</div>
+        <p class="footer-note" id="focusSessionsMeta">0 completed sessions</p>
+        <div class="table-wrap" style="margin-top:12px;">
+          <table>
+            <thead>
+              <tr><th>Date</th><th>Subject</th><th>Minutes</th><th>Cycle</th></tr>
+            </thead>
+            <tbody id="focusSessionBody"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
     <section class="card">
       <h3>📊 Study Log</h3>
       <div class="table-wrap">
@@ -98,6 +153,13 @@
 
   <script src="assets/app.js"></script>
   <script>
+    const focusState = {
+      timerId: null,
+      remainingSeconds: 25 * 60,
+      running: false,
+      startedAt: 0
+    };
+
     // Set today as default
     document.getElementById('logDate').value = formatDate(new Date());
     // Set current time as default
@@ -109,6 +171,106 @@
     const xpData = getXPData();
     document.getElementById('streakVal').textContent = xpData.streak;
     document.getElementById('xpVal').textContent = xpData.xp;
+
+    function formatCountdown(totalSeconds) {
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+    }
+
+    function getSelectedFocusMinutes() {
+      return Math.max(1, parseInt(document.getElementById('focusMinutes').value || '25', 10));
+    }
+
+    function syncFocusTimerDisplay(message) {
+      document.getElementById('focusTimerCount').textContent = formatCountdown(focusState.remainingSeconds);
+      if (message != null) document.getElementById('focusTimerMessage').textContent = message;
+    }
+
+    function resetFocusTimer(message) {
+      if (focusState.timerId) clearInterval(focusState.timerId);
+      focusState.timerId = null;
+      focusState.running = false;
+      focusState.startedAt = 0;
+      focusState.remainingSeconds = getSelectedFocusMinutes() * 60;
+      syncFocusTimerDisplay(message || 'Timer reset. Ready for the next focused session.');
+    }
+
+    function renderFocusSessions() {
+      const sessions = getFocusSessions();
+      const tbody = document.getElementById('focusSessionBody');
+      const totalMinutes = sessions.reduce((sum, item) => sum + Number(item.minutes || 0), 0);
+      document.getElementById('focusMinutesDone').textContent = totalMinutes + ' min';
+      document.getElementById('focusSessionsMeta').textContent = sessions.length + ' completed sessions';
+      tbody.innerHTML = '';
+
+      if (!sessions.length) {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="4">No focus sessions saved yet.</td>';
+        tbody.appendChild(row);
+        return;
+      }
+
+      sessions.slice(0, 8).forEach(session => {
+        const row = document.createElement('tr');
+        row.innerHTML =
+          '<td>' + friendlyDate(session.date) + '</td>' +
+          '<td>' + session.subject + '</td>' +
+          '<td>' + session.minutes + '</td>' +
+          '<td>' + (session.cycleLabel || 'Focus Session') + '</td>';
+        tbody.appendChild(row);
+      });
+    }
+
+    function completeFocusSession() {
+      const minutes = getSelectedFocusMinutes();
+      const subject = document.getElementById('focusSubject').value;
+      addFocusSession({
+        date: formatDate(new Date()),
+        subject,
+        minutes,
+        cycleLabel: minutes + ' min focus',
+        startedAt: focusState.startedAt || Date.now(),
+        endedAt: Date.now(),
+        completed: true
+      });
+      if (focusState.timerId) clearInterval(focusState.timerId);
+      focusState.timerId = null;
+      focusState.running = false;
+      focusState.startedAt = 0;
+      renderFocusSessions();
+      launchConfetti();
+      resetFocusTimer('Focus session complete. Saved for ' + subject + '.');
+    }
+
+    document.getElementById('focusStartBtn').addEventListener('click', () => {
+      if (focusState.running) return;
+      if (!focusState.startedAt) focusState.startedAt = Date.now();
+      focusState.running = true;
+      syncFocusTimerDisplay('Stay with the task until the timer ends.');
+      focusState.timerId = setInterval(() => {
+        focusState.remainingSeconds -= 1;
+        syncFocusTimerDisplay();
+        if (focusState.remainingSeconds <= 0) {
+          completeFocusSession();
+        }
+      }, 1000);
+    });
+
+    document.getElementById('focusPauseBtn').addEventListener('click', () => {
+      if (focusState.timerId) clearInterval(focusState.timerId);
+      focusState.timerId = null;
+      focusState.running = false;
+      syncFocusTimerDisplay('Timer paused. Resume when ready.');
+    });
+
+    document.getElementById('focusResetBtn').addEventListener('click', () => {
+      resetFocusTimer();
+    });
+
+    document.getElementById('focusMinutes').addEventListener('change', () => {
+      if (!focusState.running) resetFocusTimer('Duration updated. Ready for the next session.');
+    });
 
     function saveEntry() {
       const date    = document.getElementById('logDate').value;
@@ -177,6 +339,8 @@
     }
 
     renderLog();
+    renderFocusSessions();
+    resetFocusTimer('Pick a duration and press Start Focus.');
   </script>
 </body>
 </html>

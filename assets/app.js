@@ -9,6 +9,7 @@ const STORAGE_KEYS = {
   chapterMeta: 'study_portal_chapter_meta_v1',
   parentGoals: 'study_portal_parent_goals_v1',
   dailyLog: 'study_portal_daily_log_v1',
+  focusSessions: 'study_portal_focus_sessions_v1',
   xp: 'study_portal_xp_v1',
   streak: 'study_portal_streak_v1',
   lastDate: 'study_portal_last_date_v1',
@@ -181,12 +182,31 @@ function normalizeDailyEntry(entry) {
   };
 }
 
+function normalizeFocusSession(entry) {
+  return {
+    date: String(entry.date || ''),
+    subject: String(entry.subject || ''),
+    minutes: Math.max(0, Number(entry.minutes || 0)),
+    cycleLabel: String(entry.cycleLabel || ''),
+    startedAt: Number(entry.startedAt || 0),
+    endedAt: Number(entry.endedAt || 0),
+    completed: entry.completed !== false,
+    notes: String(entry.notes || '')
+  };
+}
+
 function compareLogEntriesDesc(a, b) {
   const left = `${a.date || ''}T${a.time || '00:00'}`;
   const right = `${b.date || ''}T${b.time || '00:00'}`;
   if (left > right) return -1;
   if (left < right) return 1;
   return 0;
+}
+
+function compareFocusSessionsDesc(a, b) {
+  const left = Number(a.endedAt || a.startedAt || 0);
+  const right = Number(b.endedAt || b.startedAt || 0);
+  return right - left;
 }
 
 const LEVELS = [
@@ -321,6 +341,27 @@ function mergeDailyLogValues(localValue, incomingValue) {
   return JSON.stringify(Array.from(deduped.values()).sort(compareLogEntriesDesc));
 }
 
+function mergeFocusSessionValues(localValue, incomingValue) {
+  const localEntries = safeParseJSON(localValue, []);
+  const incomingEntries = safeParseJSON(incomingValue, []);
+  const deduped = new Map();
+
+  localEntries.concat(incomingEntries).forEach(entry => {
+    if (!entry || typeof entry !== 'object') return;
+    const normalized = normalizeFocusSession(entry);
+    const dedupeKey = [
+      normalized.date,
+      normalized.subject,
+      normalized.minutes,
+      normalized.startedAt,
+      normalized.endedAt
+    ].join('|');
+    if (!deduped.has(dedupeKey)) deduped.set(dedupeKey, normalized);
+  });
+
+  return JSON.stringify(Array.from(deduped.values()).sort(compareFocusSessionsDesc));
+}
+
 function mergeNumericValues(localValue, incomingValue) {
   const localNumber = parseInt(localValue || '0', 10);
   const incomingNumber = parseInt(incomingValue || '0', 10);
@@ -358,6 +399,7 @@ function mergeStorageValue(key, localValue, incomingValue) {
   if (key === STORAGE_KEYS.chapterMeta) return mergeChapterMetaValues(localValue, incomingValue);
   if (key === STORAGE_KEYS.parentGoals) return mergeParentGoalsValues(localValue, incomingValue);
   if (key === STORAGE_KEYS.dailyLog) return mergeDailyLogValues(localValue, incomingValue);
+  if (key === STORAGE_KEYS.focusSessions) return mergeFocusSessionValues(localValue, incomingValue);
   if (key === STORAGE_KEYS.xp) return mergeNumericValues(localValue, incomingValue);
   if (key === STORAGE_KEYS.streak) return mergeNumericValues(localValue, incomingValue);
   if (key === STORAGE_KEYS.lastDate) return mergeDateValues(localValue, incomingValue);
@@ -1240,12 +1282,28 @@ function setDailyLog(entries) {
   localStorage.setItem(STORAGE_KEYS.dailyLog, JSON.stringify(entries));
 }
 
+function getFocusSessions() {
+  const raw = localStorage.getItem(STORAGE_KEYS.focusSessions);
+  return raw ? JSON.parse(raw).map(normalizeFocusSession).sort(compareFocusSessionsDesc) : [];
+}
+
+function setFocusSessions(entries) {
+  localStorage.setItem(STORAGE_KEYS.focusSessions, JSON.stringify(entries.map(normalizeFocusSession).sort(compareFocusSessionsDesc)));
+}
+
+function addFocusSession(entry) {
+  const sessions = getFocusSessions();
+  sessions.unshift(normalizeFocusSession(entry));
+  setFocusSessions(sessions);
+}
+
 function getPortalSnapshotFromStorageMap(storageMap) {
   const map = storageMap || {};
   const chapterProgress = safeParseJSON(map[STORAGE_KEYS.chapterProgress], {});
   const chapterMeta = safeParseJSON(map[STORAGE_KEYS.chapterMeta], {});
   const parentGoals = normalizeParentGoalsShape(safeParseJSON(map[STORAGE_KEYS.parentGoals], {}));
   const dailyLog = safeParseJSON(map[STORAGE_KEYS.dailyLog], []).map(normalizeDailyEntry).sort(compareLogEntriesDesc);
+  const focusSessions = safeParseJSON(map[STORAGE_KEYS.focusSessions], []).map(normalizeFocusSession).sort(compareFocusSessionsDesc);
   const xp = parseInt(map[STORAGE_KEYS.xp] || '0', 10);
   const streak = parseInt(map[STORAGE_KEYS.streak] || '0', 10);
   return {
@@ -1253,6 +1311,7 @@ function getPortalSnapshotFromStorageMap(storageMap) {
     chapterMeta,
     parentGoals,
     dailyLog,
+    focusSessions,
     xp,
     streak,
     level: getLevelForXP(xp)
@@ -1515,6 +1574,8 @@ window.saveChapterQuizResult = saveChapterQuizResult;
 window.getParentGoals = getParentGoals;
 window.getParentGoalForWeek = getParentGoalForWeek;
 window.saveParentGoalForWeek = saveParentGoalForWeek;
+window.getFocusSessions = getFocusSessions;
+window.addFocusSession = addFocusSession;
 window.getCurrentCloudParentGoals = getCurrentCloudParentGoals;
 window.updateCurrentCloudParentGoals = updateCurrentCloudParentGoals;
 window.getCloudParentGoalsByDocumentName = getCloudParentGoalsByDocumentName;
