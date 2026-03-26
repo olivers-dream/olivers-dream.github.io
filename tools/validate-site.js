@@ -1,0 +1,64 @@
+const fs = require('fs');
+const path = require('path');
+
+const ROOT = path.resolve(__dirname, '..');
+
+const errors = [];
+
+function read(filePath) {
+  return fs.readFileSync(path.join(ROOT, filePath), 'utf8');
+}
+
+function assertIncludes(filePath, text, message) {
+  const content = read(filePath);
+  if (!content.includes(text)) {
+    errors.push(`${filePath}: ${message}`);
+  }
+}
+
+function listFiles(dirPath) {
+  const absolute = path.join(ROOT, dirPath);
+  return fs.readdirSync(absolute).map(name => path.join(dirPath, name));
+}
+
+const topLevelPages = ['index.html', 'schedule.html', 'tracker.html', 'sync.html', 'parent.html'];
+topLevelPages.forEach(file => {
+  assertIncludes(file, 'top-tabs', 'missing top-tabs block');
+  assertIncludes(file, 'bottom-nav', 'missing bottom-nav block');
+});
+
+['index.html', 'schedule.html', 'tracker.html', 'sync.html'].forEach(file => {
+  const content = read(file);
+  if (content.includes('parent.html')) {
+    errors.push(`${file}: child-facing page still exposes parent.html`);
+  }
+});
+
+const subjectDirs = ['civics', 'economics', 'first_flight', 'footprints', 'geography', 'history', 'maths', 'science', 'words_expressions'];
+subjectDirs.forEach(dir => {
+  listFiles(dir)
+    .filter(file => file.endsWith('.html'))
+    .forEach(file => {
+      assertIncludes(file, 'sync.html', 'missing sync link');
+      assertIncludes(file, 'bottom-nav', 'missing mobile bottom nav');
+    });
+});
+
+listFiles('worksheets/maths')
+  .filter(file => file.endsWith('.html'))
+  .forEach(file => {
+    assertIncludes(file, '../../sync.html', 'worksheet missing sync link');
+    assertIncludes(file, 'bottom-nav', 'worksheet missing mobile bottom nav');
+  });
+
+assertIncludes('assets/app.js', 'study_portal_chapter_meta_v1', 'missing chapter meta storage key');
+assertIncludes('assets/app.js', 'queryProfilesForParentEmail', 'missing parent account query helper');
+assertIncludes('assets/content-tools.js', 'Quick Mastery Check', 'missing shared chapter enhancer content');
+assertIncludes('sync.html', 'Parent Viewer Access', 'missing parent email linking section');
+
+if (errors.length) {
+  console.error('Validation failed:\n' + errors.map(item => '- ' + item).join('\n'));
+  process.exit(1);
+}
+
+console.log('Site validation passed.');

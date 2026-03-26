@@ -61,6 +61,29 @@
 
     <div id="parentProtectedContent" class="hidden">
       <section class="card">
+        <h3>Parent Cloud Login</h3>
+        <p class="footer-note">Recommended setup: create a separate parent account here, then add that email on the child `Sync` page under `Parent Viewer Access`.</p>
+        <div class="form-row">
+          <div>
+            <label for="parentEmailInput">Parent email</label>
+            <input type="email" id="parentEmailInput" placeholder="parent@example.com"/>
+          </div>
+          <div>
+            <label for="parentPasswordInput">Parent password</label>
+            <input type="password" id="parentPasswordInput" placeholder="At least 6 characters"/>
+          </div>
+        </div>
+        <div class="action-row" style="margin-top:12px;">
+          <button class="btn secondary" id="parentCreateAccountBtn">Create Parent Account</button>
+          <button class="btn secondary" id="parentSignInBtn">Sign In</button>
+          <button class="btn secondary" id="parentSignOutBtn">Sign Out</button>
+          <button class="btn" id="parentLoadLinkedBtn">Load Linked Child Record</button>
+          <button class="btn secondary" id="parentUseLocalBtn">Use Local Snapshot</button>
+        </div>
+        <p class="footer-note" id="parentAuthMessage"></p>
+      </section>
+
+      <section class="card">
         <h3>Cloud Status</h3>
         <div class="status-box" id="parentSyncStatus">Checking sync status...</div>
         <p class="footer-note" id="parentSyncHint"></p>
@@ -95,9 +118,43 @@
         </article>
       </section>
 
+      <section class="grid">
+        <article class="card">
+          <h3>This Week</h3>
+          <div class="kpi" id="weekHours">0 hrs</div>
+          <p class="footer-note" id="weekHoursNote">No activity this week yet</p>
+        </article>
+        <article class="card">
+          <h3>Last Week</h3>
+          <div class="kpi" id="lastWeekHours">0 hrs</div>
+          <p class="footer-note" id="lastWeekNote">Waiting for comparison data</p>
+        </article>
+        <article class="card">
+          <h3>Strongest Subject</h3>
+          <div class="kpi" id="strongestSubject">—</div>
+          <p class="footer-note" id="strongestNote">No subject data yet</p>
+        </article>
+        <article class="card">
+          <h3>Needs Attention</h3>
+          <div class="kpi" id="weakestSubject">—</div>
+          <p class="footer-note" id="weakestNote">No weak areas detected yet</p>
+        </article>
+      </section>
+
+      <section class="card">
+        <h3>Weekly Trend</h3>
+        <div class="trend-bars" id="weeklyTrendBars"></div>
+        <p class="footer-note" id="weeklyTrendNote"></p>
+      </section>
+
       <section class="card">
         <h3>Subject Progress</h3>
         <div class="grid" id="subjectGrid"></div>
+      </section>
+
+      <section class="card">
+        <h3>Attention Board</h3>
+        <div class="status-box" id="attentionBoard">No chapters flagged yet.</div>
       </section>
 
       <section class="card">
@@ -136,7 +193,22 @@
       { key: 'we', prefix: 'we', total: 9, label: 'Words & Expressions', icon: '✍️' }
     ];
     const PARENT_UNLOCK_KEY = 'studyportal_parent_unlock_v1';
+    const SUBJECT_NAME_TO_PREFIX = {
+      maths: 'math',
+      math: 'math',
+      science: 'sci',
+      geography: 'geo',
+      civics: 'civ',
+      history: 'hist',
+      economics: 'econ',
+      'first flight': 'ff',
+      footprints: 'fp',
+      'words & expressions': 'we',
+      'words and expressions': 'we'
+    };
     let parentCloudReady = false;
+    let parentRemoteProfile = null;
+    let parentDataSnapshot = null;
 
     function getParentPin() {
       return String((window.STUDY_PORTAL_CLOUD_CONFIG && window.STUDY_PORTAL_CLOUD_CONFIG.parentAccessPin) || '').trim();
@@ -160,25 +232,193 @@
       document.getElementById('parentPinInput').focus();
     }
 
+    function showParentAuthMessage(text) {
+      document.getElementById('parentAuthMessage').textContent = text || '';
+    }
+
+    function buildLocalSnapshot() {
+      const xp = getXP();
+      return {
+        chapterProgress: getChapterProgress(),
+        chapterMeta: getChapterMeta(),
+        dailyLog: getDailyLog().slice().sort((a, b) => {
+          const left = (a.date || '') + 'T' + (a.time || '00:00');
+          const right = (b.date || '') + 'T' + (b.time || '00:00');
+          return left < right ? 1 : (left > right ? -1 : 0);
+        }),
+        xp,
+        streak: getStreak(),
+        level: getLevelForXP(xp)
+      };
+    }
+
+    function getSnapshot() {
+      return parentDataSnapshot || buildLocalSnapshot();
+    }
+
+    function getSubjectPrefixFromEntry(subjectName) {
+      const normalized = String(subjectName || '').trim().toLowerCase();
+      return SUBJECT_NAME_TO_PREFIX[normalized] || '';
+    }
+
+    function getSubjectPrefixFromChapterKey(chapterKey) {
+      const value = String(chapterKey || '').toLowerCase();
+      if (value.includes('/maths/') || value.startsWith('math-')) return 'math';
+      if (value.includes('/science/') || value.startsWith('sci-')) return 'sci';
+      if (value.includes('/geography/') || value.startsWith('geo-')) return 'geo';
+      if (value.includes('/civics/') || value.startsWith('civ-')) return 'civ';
+      if (value.includes('/history/') || value.startsWith('hist-')) return 'hist';
+      if (value.includes('/economics/') || value.startsWith('econ-')) return 'econ';
+      if (value.includes('/first_flight/') || value.startsWith('ff-')) return 'ff';
+      if (value.includes('/footprints/') || value.startsWith('fp-')) return 'fp';
+      if (value.includes('/words_expressions/') || value.startsWith('we-')) return 'we';
+      return '';
+    }
+
+    function chapterLabelFromKey(chapterKey) {
+      const fileName = String(chapterKey || '').split('/').pop() || '';
+      return fileName.replace('.html', '').replace(/[-_]/g, ' ').replace(/\b\w/g, match => match.toUpperCase());
+    }
+
+    function getMondayKey(dateValue) {
+      const value = new Date(dateValue);
+      if (Number.isNaN(value.getTime())) return '';
+      const monday = new Date(value);
+      monday.setHours(0, 0, 0, 0);
+      monday.setDate(value.getDate() - ((value.getDay() + 6) % 7));
+      return formatDate(monday);
+    }
+
+    function buildWeeklySeries(entries, count) {
+      const itemCount = count || 8;
+      const now = new Date();
+      const currentMonday = new Date(now);
+      currentMonday.setHours(0, 0, 0, 0);
+      currentMonday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+
+      const buckets = [];
+      const bucketMap = new Map();
+      for (let index = itemCount - 1; index >= 0; index -= 1) {
+        const weekStart = new Date(currentMonday);
+        weekStart.setDate(currentMonday.getDate() - (index * 7));
+        const key = formatDate(weekStart);
+        const label = weekStart.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+        const bucket = { key, label, hours: 0 };
+        buckets.push(bucket);
+        bucketMap.set(key, bucket);
+      }
+
+      (entries || []).forEach(entry => {
+        const key = getMondayKey(entry.date);
+        if (!bucketMap.has(key)) return;
+        bucketMap.get(key).hours += Number(entry.hours || 0);
+      });
+
+      return buckets.map(bucket => ({
+        ...bucket,
+        hours: Number(bucket.hours.toFixed(1))
+      }));
+    }
+
+    function getSubjectStatsFromSnapshot(snapshot, subject) {
+      const progress = snapshot.chapterProgress || {};
+      const chapterMeta = snapshot.chapterMeta || {};
+      const dailyLog = snapshot.dailyLog || [];
+      const done = Object.keys(progress).filter(id => id.startsWith(subject.prefix + '-') && progress[id]).length;
+      const hours = dailyLog
+        .filter(entry => getSubjectPrefixFromEntry(entry.subject) === subject.prefix)
+        .reduce((sum, entry) => sum + Number(entry.hours || 0), 0);
+
+      const relatedMeta = Object.keys(chapterMeta)
+        .map(key => ({ key, value: chapterMeta[key] || {} }))
+        .filter(item => getSubjectPrefixFromChapterKey(item.key) === subject.prefix);
+
+      const quizScores = relatedMeta
+        .filter(item => item.value.quiz && item.value.quiz.percent != null)
+        .map(item => Number(item.value.quiz.percent || 0));
+      const averageQuiz = quizScores.length
+        ? Math.round(quizScores.reduce((sum, value) => sum + value, 0) / quizScores.length)
+        : 0;
+      const attentionCount = relatedMeta
+        .filter(item => item.value.status === 'need_revision' || item.value.status === 'confusing' || Number((item.value.quiz || {}).percent || 100) < 60)
+        .length;
+
+      return {
+        done,
+        total: subject.total,
+        percent: subject.total ? Math.round((done / subject.total) * 100) : 0,
+        hours: Number(hours.toFixed(1)),
+        averageQuiz,
+        attentionCount
+      };
+    }
+
+    function getStrongestAndWeakestSubjects(snapshot) {
+      const statsList = SUBJECTS.map(subject => ({
+        subject,
+        stats: getSubjectStatsFromSnapshot(snapshot, subject)
+      }));
+      const activeList = statsList.filter(item =>
+        item.stats.done > 0 || item.stats.hours > 0 || item.stats.averageQuiz > 0 || item.stats.attentionCount > 0
+      );
+
+      if (!activeList.length) {
+        return { strongest: null, weakest: null };
+      }
+
+      const strongest = activeList.slice().sort((left, right) => {
+        const leftScore = (left.stats.percent * 0.55) + (left.stats.averageQuiz * 0.25) + (Math.min(left.stats.hours * 10, 100) * 0.20);
+        const rightScore = (right.stats.percent * 0.55) + (right.stats.averageQuiz * 0.25) + (Math.min(right.stats.hours * 10, 100) * 0.20);
+        return rightScore - leftScore;
+      })[0];
+
+      const weakest = activeList.slice().sort((left, right) => {
+        const leftRisk = ((100 - left.stats.percent) * 0.45) + ((100 - (left.stats.averageQuiz || 55)) * 0.20) + (left.stats.attentionCount * 18) - (left.stats.hours * 2);
+        const rightRisk = ((100 - right.stats.percent) * 0.45) + ((100 - (right.stats.averageQuiz || 55)) * 0.20) + (right.stats.attentionCount * 18) - (right.stats.hours * 2);
+        return rightRisk - leftRisk;
+      })[0];
+
+      return { strongest, weakest };
+    }
+
+    function downloadRemoteBackup(storageMap) {
+      const payload = JSON.stringify({
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        storage: storageMap || {}
+      }, null, 2);
+      const blob = new Blob([payload], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'study-portal-parent-export-' + formatDate(new Date()) + '.json';
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    }
+
     function renderParentStatus() {
       if (!parentCloudReady) {
-        document.getElementById('parentSyncStatus').textContent = 'Parent view is ready. Click Pull Latest Now to load the shared cloud record.';
-        document.getElementById('parentSyncHint').textContent = 'This page starts in local mode to keep navigation responsive.';
+        document.getElementById('parentSyncStatus').textContent = 'Parent view is ready. Use local data now, or sign in with a linked parent account and click Pull Latest Now.';
+        document.getElementById('parentSyncHint').textContent = 'This page starts in local mode to keep navigation responsive and to avoid changing the live child record.';
         return;
       }
       const sync = getCloudSyncState();
+      if (parentRemoteProfile) {
+        document.getElementById('parentSyncStatus').textContent = 'Viewing linked child record from the cloud.';
+        document.getElementById('parentSyncHint').textContent = 'Linked parent email: ' + (sync.email || 'unknown') + ' · last cloud update: ' + (parentRemoteProfile.updatedAtMs ? new Date(parentRemoteProfile.updatedAtMs).toLocaleString('en-IN') : 'unknown');
+        return;
+      }
       document.getElementById('parentSyncStatus').textContent = sync.message;
       document.getElementById('parentSyncHint').textContent = sync.configured
-        ? (sync.signedIn ? ('Viewing cloud record for ' + (sync.email || sync.uid)) : 'Firebase is configured. Sign in on the Sync page to monitor the shared cloud record.')
+        ? (sync.signedIn ? ('Viewing current account cloud record for ' + (sync.email || sync.uid)) : 'Firebase is configured. Sign in to monitor the shared cloud record.')
         : 'Cloud sync is not configured yet. This page currently shows only local browser data.';
     }
 
-    function renderOverview() {
-      const xp = getXP();
-      const streak = getStreak();
-      const level = getLevelForXP(xp);
-      const dailyLog = getDailyLog();
-      const progress = getChapterProgress();
+    function renderOverview(snapshot) {
+      const xp = snapshot.xp || 0;
+      const streak = snapshot.streak || 0;
+      const level = snapshot.level || getLevelForXP(xp);
+      const dailyLog = snapshot.dailyLog || [];
+      const progress = snapshot.chapterProgress || {};
       const totalChapters = SUBJECTS.reduce((sum, subject) => sum + subject.total, 0);
       const completed = Object.keys(progress).filter(key => progress[key]).length;
       const totalHours = dailyLog.reduce((sum, entry) => sum + Number(entry.hours || 0), 0);
@@ -197,27 +437,102 @@
         : 'No activity yet';
     }
 
-    function renderSubjectGrid() {
+    function renderWeeklyAnalytics(snapshot) {
+      const weeklySeries = buildWeeklySeries(snapshot.dailyLog || [], 8);
+      const currentWeek = weeklySeries[weeklySeries.length - 1] || { hours: 0 };
+      const previousWeek = weeklySeries[weeklySeries.length - 2] || { hours: 0 };
+      const subjectLeaders = getStrongestAndWeakestSubjects(snapshot);
+      const maxHours = Math.max(...weeklySeries.map(item => item.hours), 1);
+      const trendEl = document.getElementById('weeklyTrendBars');
+
+      document.getElementById('weekHours').textContent = currentWeek.hours.toFixed(1) + ' hrs';
+      document.getElementById('lastWeekHours').textContent = previousWeek.hours.toFixed(1) + ' hrs';
+
+      const delta = currentWeek.hours - previousWeek.hours;
+      document.getElementById('weekHoursNote').textContent = delta === 0
+        ? 'Steady compared with last week'
+        : (delta > 0 ? '+' : '') + delta.toFixed(1) + ' hrs vs last week';
+      document.getElementById('lastWeekNote').textContent = previousWeek.hours
+        ? 'Last recorded week before the current one'
+        : 'No prior week data yet';
+
+      document.getElementById('strongestSubject').textContent = subjectLeaders.strongest
+        ? (subjectLeaders.strongest.subject.icon + ' ' + subjectLeaders.strongest.subject.label)
+        : '—';
+      document.getElementById('strongestNote').textContent = subjectLeaders.strongest
+        ? (subjectLeaders.strongest.stats.percent + '% complete · ' + subjectLeaders.strongest.stats.hours.toFixed(1) + ' hrs · quiz ' + subjectLeaders.strongest.stats.averageQuiz + '%')
+        : 'No subject data yet';
+
+      document.getElementById('weakestSubject').textContent = subjectLeaders.weakest
+        ? (subjectLeaders.weakest.subject.icon + ' ' + subjectLeaders.weakest.subject.label)
+        : '—';
+      document.getElementById('weakestNote').textContent = subjectLeaders.weakest
+        ? (subjectLeaders.weakest.stats.percent + '% complete · ' + subjectLeaders.weakest.stats.attentionCount + ' flagged chapters')
+        : 'No weak areas detected yet';
+
+      trendEl.innerHTML = weeklySeries.map(item => {
+        const height = Math.max(14, Math.round((item.hours / maxHours) * 130));
+        return '<div class="trend-bar-card">' +
+          '<div class="trend-bar" style="height:' + height + 'px"></div>' +
+          '<div class="trend-bar-value">' + item.hours.toFixed(1) + 'h</div>' +
+          '<div class="trend-bar-label">' + item.label + '</div>' +
+          '</div>';
+      }).join('');
+
+      document.getElementById('weeklyTrendNote').textContent = 'Shows the last ' + weeklySeries.length + ' study weeks ending with the current week.';
+    }
+
+    function renderSubjectGrid(snapshot) {
       const grid = document.getElementById('subjectGrid');
       grid.innerHTML = '';
 
       SUBJECTS.forEach(subject => {
-        const stats = calculateSubjectStats(subject.prefix, subject.total);
+        const stats = getSubjectStatsFromSnapshot(snapshot, subject);
         const article = document.createElement('article');
         article.className = 'card';
         article.innerHTML =
           '<h3>' + subject.icon + ' ' + subject.label + '</h3>' +
           '<div class="kpi">' + stats.done + ' / ' + stats.total + '</div>' +
           '<div class="progress-wrap"><div class="progress" style="width:' + stats.percent + '%"></div></div>' +
-          '<p class="footer-note">' + stats.percent + '% complete</p>';
+          '<p class="footer-note">' + stats.percent + '% complete · ' + stats.hours.toFixed(1) + ' hrs · quiz ' + stats.averageQuiz + '%</p>';
         grid.appendChild(article);
       });
     }
 
-    function renderRecentLog() {
+    function renderAttentionBoard(snapshot) {
+      const chapterMeta = snapshot.chapterMeta || {};
+      const items = Object.keys(chapterMeta)
+        .map(key => ({
+          key,
+          label: chapterLabelFromKey(key),
+          subjectPrefix: getSubjectPrefixFromChapterKey(key),
+          status: chapterMeta[key].status || '',
+          quizPercent: Number((chapterMeta[key].quiz || {}).percent || 0),
+          updatedAt: Number(chapterMeta[key].updatedAt || 0)
+        }))
+        .filter(item => item.status === 'need_revision' || item.status === 'confusing' || item.quizPercent && item.quizPercent < 60)
+        .sort((left, right) => right.updatedAt - left.updatedAt)
+        .slice(0, 8);
+
+      const board = document.getElementById('attentionBoard');
+      if (!items.length) {
+        board.innerHTML = 'No flagged chapters yet. When a child marks a chapter as `Need Revision` or scores low on a mastery check, it will appear here.';
+        return;
+      }
+
+      board.innerHTML = items.map(item => {
+        const subject = SUBJECTS.find(entry => entry.prefix === item.subjectPrefix);
+        const reason = item.status === 'confusing'
+          ? 'Marked confusing'
+          : (item.status === 'need_revision' ? 'Needs revision' : ('Low mastery quiz: ' + item.quizPercent + '%'));
+        return '&bull; ' + (subject ? subject.icon + ' ' : '') + item.label + ' — ' + reason;
+      }).join('<br>');
+    }
+
+    function renderRecentLog(snapshot) {
       const tbody = document.getElementById('recentLogBody');
       const note = document.getElementById('recentLogNote');
-      const entries = getDailyLog().slice(0, 12);
+      const entries = (snapshot.dailyLog || []).slice(0, 12);
 
       tbody.innerHTML = '';
       if (!entries.length) {
@@ -243,10 +558,38 @@
     }
 
     function renderParentPage() {
+      const snapshot = getSnapshot();
       renderParentStatus();
-      renderOverview();
-      renderSubjectGrid();
-      renderRecentLog();
+      renderOverview(snapshot);
+      renderWeeklyAnalytics(snapshot);
+      renderSubjectGrid(snapshot);
+      renderAttentionBoard(snapshot);
+      renderRecentLog(snapshot);
+    }
+
+    async function loadCloudView() {
+      await studyPortalCloud.initialize();
+      const state = getCloudSyncState();
+      if (!state.signedIn) {
+        throw new Error('Sign in with either the child account or a linked parent account first.');
+      }
+
+      const linkedProfiles = await queryProfilesForParentEmail(state.email || '');
+      if (linkedProfiles.length) {
+        parentRemoteProfile = linkedProfiles[0];
+        parentDataSnapshot = getPortalSnapshotFromStorageMap(parentRemoteProfile.storageMap);
+        parentCloudReady = true;
+        showParentAuthMessage('Loaded linked child record for parent email ' + (state.email || '') + '.');
+        renderParentPage();
+        return;
+      }
+
+      await pullProgressFromCloud();
+      parentRemoteProfile = null;
+      parentDataSnapshot = null;
+      parentCloudReady = true;
+      showParentAuthMessage('Loaded current account cloud record.');
+      renderParentPage();
     }
 
     document.getElementById('parentUnlockBtn').addEventListener('click', () => {
@@ -275,24 +618,86 @@
       }
     });
 
-    document.getElementById('parentPullBtn').addEventListener('click', async () => {
+    document.getElementById('parentCreateAccountBtn').addEventListener('click', async () => {
       try {
-        await studyPortalCloud.initialize();
+        showParentAuthMessage('Creating parent account...');
+        await registerStudyPortalCloud(document.getElementById('parentEmailInput').value, document.getElementById('parentPasswordInput').value);
         parentCloudReady = true;
-        await pullProgressFromCloud();
+        showParentAuthMessage('Parent account created. Now add this email on the child Sync page under Parent Viewer Access.');
         renderParentPage();
       } catch (err) {
+        showParentAuthMessage(err.message || 'Could not create the parent account.');
+      }
+    });
+
+    document.getElementById('parentSignInBtn').addEventListener('click', async () => {
+      try {
+        showParentAuthMessage('Signing in...');
+        await signInStudyPortalCloud(document.getElementById('parentEmailInput').value, document.getElementById('parentPasswordInput').value);
+        parentCloudReady = true;
+        showParentAuthMessage('Signed in. Click `Load Linked Child Record` to open the linked dashboard.');
+        renderParentPage();
+      } catch (err) {
+        showParentAuthMessage(err.message || 'Could not sign in.');
+      }
+    });
+
+    document.getElementById('parentSignOutBtn').addEventListener('click', async () => {
+      try {
+        await signOutStudyPortalCloud();
+        parentCloudReady = false;
+        parentRemoteProfile = null;
+        parentDataSnapshot = null;
+        showParentAuthMessage('Signed out.');
+        renderParentPage();
+      } catch (err) {
+        showParentAuthMessage(err.message || 'Could not sign out.');
+      }
+    });
+
+    document.getElementById('parentLoadLinkedBtn').addEventListener('click', async () => {
+      try {
+        showParentAuthMessage('Loading linked child record...');
+        await loadCloudView();
+      } catch (err) {
+        showParentAuthMessage(err.message || 'Could not load the linked child record.');
         document.getElementById('parentSyncHint').textContent = err.message || 'Cloud pull failed.';
       }
     });
 
+    document.getElementById('parentUseLocalBtn').addEventListener('click', () => {
+      parentRemoteProfile = null;
+      parentDataSnapshot = null;
+      parentCloudReady = false;
+      showParentAuthMessage('Using local browser snapshot only.');
+      renderParentPage();
+    });
+
+    document.getElementById('parentPullBtn').addEventListener('click', async () => {
+      try {
+        showParentAuthMessage('Refreshing cloud view...');
+        await loadCloudView();
+      } catch (err) {
+        document.getElementById('parentSyncHint').textContent = err.message || 'Cloud pull failed.';
+        showParentAuthMessage(err.message || 'Cloud pull failed.');
+      }
+    });
+
     document.getElementById('parentExportBtn').addEventListener('click', () => {
+      if (parentRemoteProfile && parentRemoteProfile.storageMap) {
+        downloadRemoteBackup(parentRemoteProfile.storageMap);
+        showParentAuthMessage('Exported the linked child cloud snapshot.');
+        return;
+      }
       downloadProgressBackup();
+      showParentAuthMessage('Exported the local browser snapshot.');
     });
 
     document.getElementById('parentLockBtn').addEventListener('click', () => {
       sessionStorage.removeItem(PARENT_UNLOCK_KEY);
       parentCloudReady = false;
+      parentRemoteProfile = null;
+      parentDataSnapshot = null;
       showParentLock('Parent view locked.');
     });
 

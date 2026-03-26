@@ -108,6 +108,22 @@
       </article>
 
       <article class="card">
+        <h3>Parent Viewer Access</h3>
+        <p class="footer-note">Add your parent email here to allow a separate parent account to open the child dashboard without using the child login.</p>
+        <div class="form-row">
+          <div>
+            <label for="parentEmailInput">Parent email</label>
+            <input type="email" id="parentEmailInput" placeholder="parent@example.com"/>
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="btn secondary" id="addParentEmailBtn">Add Parent Email</button>
+          <button class="btn secondary" id="refreshParentEmailsBtn">Refresh List</button>
+        </div>
+        <div class="status-box" style="margin-top:12px;" id="parentEmailListBox">No parent emails linked yet.</div>
+      </article>
+
+      <article class="card">
         <h3>Backup Actions</h3>
         <div class="action-row">
           <button class="btn secondary" id="exportBtn">Export Backup JSON</button>
@@ -138,9 +154,28 @@
     const deviceLabelInput = document.getElementById('deviceLabel');
     const backupFileInput = document.getElementById('backupFile');
     const importFileName = document.getElementById('importFileName');
+    const parentEmailInput = document.getElementById('parentEmailInput');
+    const parentEmailListBox = document.getElementById('parentEmailListBox');
 
     function showMessage(text) {
       authMessage.textContent = text;
+    }
+
+    async function renderParentEmails() {
+      const state = getCloudSyncState();
+      if (!state.signedIn) {
+        parentEmailListBox.textContent = 'Sign in with the child account to manage parent viewer emails.';
+        return;
+      }
+
+      try {
+        const emails = await getLinkedParentEmails();
+        parentEmailListBox.innerHTML = emails.length
+          ? ('Linked parent emails:<br>' + emails.map(item => '&bull; ' + item).join('<br>'))
+          : 'No parent emails linked yet.';
+      } catch (err) {
+        parentEmailListBox.textContent = err.message || 'Could not load linked parent emails.';
+      }
     }
 
     function renderSyncState() {
@@ -150,6 +185,7 @@
         ? (state.signedIn ? ('Signed in as ' + (state.email || state.uid)) : 'Firebase is configured. Sign in to connect devices.')
         : 'Cloud config is still empty, so the portal is running in local-only mode.';
       deviceLabelInput.value = getPreferredDeviceLabel();
+      renderParentEmails();
     }
 
     document.getElementById('saveDeviceLabel').addEventListener('click', () => {
@@ -195,6 +231,29 @@
       } catch (err) {
         showMessage(err.message || 'Cloud upload failed.');
       }
+    });
+
+    document.getElementById('addParentEmailBtn').addEventListener('click', async () => {
+      const nextEmail = String(parentEmailInput.value || '').trim().toLowerCase();
+      if (!nextEmail) {
+        showMessage('Enter a parent email first.');
+        return;
+      }
+      try {
+        showMessage('Saving parent viewer email...');
+        const currentEmails = await getLinkedParentEmails();
+        const updated = Array.from(new Set(currentEmails.concat(nextEmail)));
+        await updateLinkedParentEmails(updated);
+        parentEmailInput.value = '';
+        await renderParentEmails();
+        showMessage('Parent viewer email saved.');
+      } catch (err) {
+        showMessage(err.message || 'Could not save parent viewer email.');
+      }
+    });
+
+    document.getElementById('refreshParentEmailsBtn').addEventListener('click', async () => {
+      await renderParentEmails();
     });
 
     document.getElementById('pullBtn').addEventListener('click', async () => {

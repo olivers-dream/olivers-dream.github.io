@@ -14,7 +14,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /studyPortalProfiles/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && (
+        request.auth.uid == userId ||
+        (resource.data.parentEmails is list && request.auth.token.email in resource.data.parentEmails)
+      );
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
@@ -38,6 +42,19 @@ window.STUDY_PORTAL_CLOUD_CONFIG = {
   collectionName: 'studyPortalProfiles'
 };
 ```
+
+Parent access setup
+-------------------
+
+1. On the child account, open `sync.html`.
+2. Sign in with the child cloud account.
+3. In `Parent Viewer Access`, add the parent email address.
+4. On the parent device, open `parent.html`.
+5. Unlock the page with the parent PIN.
+6. Create or sign in with that separate parent email and password.
+7. Click `Load Linked Child Record`.
+
+This does not reset the child progress record. It only grants read access for the listed parent email.
 
 How to move existing progress from the old computer
 --------------------------------------------------

@@ -6,6 +6,7 @@ const RESET_FLAG_KEY = 'study_portal_reset_done_v1';
 
 const STORAGE_KEYS = {
   chapterProgress: 'study_portal_chapter_progress_v1',
+  chapterMeta: 'study_portal_chapter_meta_v1',
   dailyLog: 'study_portal_daily_log_v1',
   xp: 'study_portal_xp_v1',
   streak: 'study_portal_streak_v1',
@@ -217,6 +218,43 @@ function mergeChapterProgressValues(localValue, incomingValue) {
   return JSON.stringify(merged);
 }
 
+function mergeChapterMetaValues(localValue, incomingValue) {
+  const localMap = safeParseJSON(localValue, {});
+  const incomingMap = safeParseJSON(incomingValue, {});
+  const merged = { ...localMap };
+
+  Object.keys(incomingMap).forEach(key => {
+    const localEntry = (localMap && typeof localMap[key] === 'object' && localMap[key]) ? localMap[key] : {};
+    const incomingEntry = (incomingMap && typeof incomingMap[key] === 'object' && incomingMap[key]) ? incomingMap[key] : {};
+    const nextEntry = { ...localEntry, ...incomingEntry };
+
+    if (localEntry.status && incomingEntry.status && localEntry.status !== incomingEntry.status) {
+      const priority = { confusing: 3, need_revision: 2, mastered: 1, in_progress: 0 };
+      nextEntry.status = (priority[localEntry.status] || 0) >= (priority[incomingEntry.status] || 0)
+        ? localEntry.status
+        : incomingEntry.status;
+    }
+
+    if (localEntry.quiz && incomingEntry.quiz) {
+      nextEntry.quiz = (Number(localEntry.quiz.updatedAt || 0) >= Number(incomingEntry.quiz.updatedAt || 0))
+        ? localEntry.quiz
+        : incomingEntry.quiz;
+    }
+
+    if (localEntry.notes && incomingEntry.notes && localEntry.notes !== incomingEntry.notes) {
+      nextEntry.notes = localEntry.notes.length >= incomingEntry.notes.length ? localEntry.notes : incomingEntry.notes;
+    }
+
+    if (localEntry.updatedAt || incomingEntry.updatedAt) {
+      nextEntry.updatedAt = Math.max(Number(localEntry.updatedAt || 0), Number(incomingEntry.updatedAt || 0));
+    }
+
+    merged[key] = nextEntry;
+  });
+
+  return JSON.stringify(merged);
+}
+
 function mergeDailyLogValues(localValue, incomingValue) {
   const localEntries = safeParseJSON(localValue, []);
   const incomingEntries = safeParseJSON(incomingValue, []);
@@ -272,6 +310,7 @@ function mergeStorageValue(key, localValue, incomingValue) {
     return (localValue === 'yes' || incomingValue === 'yes') ? 'yes' : 'no';
   }
   if (key === STORAGE_KEYS.chapterProgress) return mergeChapterProgressValues(localValue, incomingValue);
+  if (key === STORAGE_KEYS.chapterMeta) return mergeChapterMetaValues(localValue, incomingValue);
   if (key === STORAGE_KEYS.dailyLog) return mergeDailyLogValues(localValue, incomingValue);
   if (key === STORAGE_KEYS.xp) return mergeNumericValues(localValue, incomingValue);
   if (key === STORAGE_KEYS.streak) return mergeNumericValues(localValue, incomingValue);
@@ -450,13 +489,19 @@ function getCloudCollectionName() {
   return (syncState.config && syncState.config.collectionName) || 'studyPortalProfiles';
 }
 
+function getCloudDatabaseBaseUrl() {
+  if (!syncState.config || !syncState.config.firebase || !syncState.config.firebase.projectId) {
+    throw new Error('Cloud sync is not configured yet.');
+  }
+  return `https://firestore.googleapis.com/v1/projects/${syncState.config.firebase.projectId}/databases/(default)`;
+}
+
 function getCloudDocumentUrl() {
-  if (!syncState.config || !syncState.config.firebase || !syncState.config.firebase.projectId || !syncState.user) {
+  if (!syncState.user) {
     throw new Error('Sign in on the Sync page before using cloud sync.');
   }
-  const projectId = syncState.config.firebase.projectId;
   const path = `${encodeURIComponent(getCloudCollectionName())}/${encodeURIComponent(syncState.user.uid)}`;
-  return `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${path}`;
+  return `${getCloudDatabaseBaseUrl()}/documents/${path}`;
 }
 
 async function getCloudAuthToken(forceRefresh) {
@@ -471,6 +516,9 @@ function decodeFirestoreValue(value) {
   if (Object.prototype.hasOwnProperty.call(value, 'doubleValue')) return Number(value.doubleValue || 0);
   if (Object.prototype.hasOwnProperty.call(value, 'booleanValue')) return !!value.booleanValue;
   if (value.nullValue != null) return null;
+  if (value.arrayValue) {
+    return (value.arrayValue.values || []).map(item => decodeFirestoreValue(item));
+  }
   if (value.mapValue && value.mapValue.fields) {
     const mapped = {};
     Object.keys(value.mapValue.fields).forEach(key => {
@@ -479,6 +527,32 @@ function decodeFirestoreValue(value) {
     return mapped;
   }
   return null;
+}
+
+function encodeFirestoreValue(value) {
+  if (Array.isArray(value)) {
+    return {
+      arrayValue: {
+        values: value.map(item => encodeFirestoreValue(item))
+      }
+    };
+  }
+  if (value === null || value === undefined) {
+    return { nullValue: null };
+  }
+  if (typeof value === 'boolean') return { booleanValue: value };
+  if (typeof value === 'number') {
+    if (Number.isInteger(value)) return { integerValue: String(value) };
+    return { doubleValue: value };
+  }
+  if (typeof value === 'object') {
+    const fields = {};
+    Object.keys(value).forEach(key => {
+      fields[key] = encodeFirestoreValue(value[key]);
+    });
+    return { mapValue: { fields } };
+  }
+  return { stringValue: String(value) };
 }
 
 function extractRemoteStorageMap(docData) {
@@ -506,6 +580,13 @@ function extractRemoteUpdatedAtMs(docData) {
   return 0;
 }
 
+function extractRemoteParentEmails(docData) {
+  if (!docData || typeof docData !== 'object') return [];
+  const fields = docData.fields || {};
+  const decoded = decodeFirestoreValue(fields.parentEmails);
+  return Array.isArray(decoded) ? decoded.filter(Boolean).map(item => String(item).trim().toLowerCase()) : [];
+}
+
 async function fetchCloudDocument() {
   const response = await fetch(getCloudDocumentUrl(), {
     method: 'GET',
@@ -522,6 +603,98 @@ async function fetchCloudDocument() {
   }
 
   return response.json();
+}
+
+async function patchCurrentCloudDocumentFields(fields, updateMaskFieldPaths) {
+  const url = new URL(getCloudDocumentUrl());
+  (updateMaskFieldPaths || Object.keys(fields || {})).forEach(field => {
+    url.searchParams.append('updateMask.fieldPaths', field);
+  });
+
+  const response = await fetch(url.toString(), {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${await getCloudAuthToken()}`
+    },
+    body: JSON.stringify({ fields })
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Cloud update failed (${response.status}): ${text.slice(0, 180)}`);
+  }
+
+  return response.json();
+}
+
+async function getLinkedParentEmails() {
+  await initializeCloudSync();
+  if (!syncState.user) throw new Error('Sign in on the Sync page first.');
+  const docData = await fetchCloudDocument();
+  return extractRemoteParentEmails(docData);
+}
+
+async function updateLinkedParentEmails(emails) {
+  await initializeCloudSync();
+  if (!syncState.user) throw new Error('Sign in on the Sync page first.');
+
+  const normalized = Array.from(new Set((emails || [])
+    .map(item => String(item || '').trim().toLowerCase())
+    .filter(Boolean)));
+
+  await patchCurrentCloudDocumentFields({
+    parentEmails: encodeFirestoreValue(normalized)
+  }, ['parentEmails']);
+
+  return normalized;
+}
+
+async function queryProfilesForParentEmail(parentEmail) {
+  await initializeCloudSync();
+  if (!syncState.user) throw new Error('Sign in first.');
+
+  const normalizedEmail = String(parentEmail || syncState.user.email || '').trim().toLowerCase();
+  if (!normalizedEmail) throw new Error('Parent email is missing.');
+
+  const response = await fetch(`${getCloudDatabaseBaseUrl()}/documents:runQuery`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${await getCloudAuthToken()}`
+    },
+    body: JSON.stringify({
+      structuredQuery: {
+        from: [{ collectionId: getCloudCollectionName() }],
+        where: {
+          fieldFilter: {
+            field: { fieldPath: 'parentEmails' },
+            op: 'ARRAY_CONTAINS',
+            value: { stringValue: normalizedEmail }
+          }
+        },
+        limit: 5
+      }
+    })
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Parent lookup failed (${response.status}): ${text.slice(0, 180)}`);
+  }
+
+  const rows = await response.json();
+  return rows
+    .map(row => row.document)
+    .filter(Boolean)
+    .map(doc => ({
+      id: doc.name ? doc.name.split('/').pop() : '',
+      name: doc.name || '',
+      storageMap: extractRemoteStorageMap(doc),
+      updatedAtMs: extractRemoteUpdatedAtMs(doc),
+      parentEmails: extractRemoteParentEmails(doc),
+      doc
+    }));
 }
 
 function buildCloudPatchUrl() {
@@ -844,6 +1017,48 @@ function setChapterProgress(progress) {
   localStorage.setItem(STORAGE_KEYS.chapterProgress, JSON.stringify(progress));
 }
 
+function getChapterMeta() {
+  const raw = localStorage.getItem(STORAGE_KEYS.chapterMeta);
+  return raw ? JSON.parse(raw) : {};
+}
+
+function setChapterMeta(meta) {
+  localStorage.setItem(STORAGE_KEYS.chapterMeta, JSON.stringify(meta));
+}
+
+function getChapterMetaRecord(chapterKey) {
+  const meta = getChapterMeta();
+  return (meta && typeof meta[chapterKey] === 'object' && meta[chapterKey]) ? meta[chapterKey] : {};
+}
+
+function updateChapterMetaRecord(chapterKey, updates) {
+  const meta = getChapterMeta();
+  const nextRecord = {
+    ...getChapterMetaRecord(chapterKey),
+    ...updates,
+    updatedAt: Date.now()
+  };
+  meta[chapterKey] = nextRecord;
+  setChapterMeta(meta);
+  return nextRecord;
+}
+
+function setChapterStatus(chapterKey, status) {
+  return updateChapterMetaRecord(chapterKey, { status: status || 'in_progress' });
+}
+
+function saveChapterQuizResult(chapterKey, result) {
+  return updateChapterMetaRecord(chapterKey, {
+    quiz: {
+      score: Number(result && result.score ? result.score : 0),
+      total: Number(result && result.total ? result.total : 0),
+      percent: Number(result && result.percent ? result.percent : 0),
+      answers: Array.isArray(result && result.answers) ? result.answers : [],
+      updatedAt: Date.now()
+    }
+  });
+}
+
 function markChapterDone(chapterId, done = true) {
   const progress = getChapterProgress();
   progress[chapterId] = done;
@@ -864,6 +1079,23 @@ function getDailyLog() {
 
 function setDailyLog(entries) {
   localStorage.setItem(STORAGE_KEYS.dailyLog, JSON.stringify(entries));
+}
+
+function getPortalSnapshotFromStorageMap(storageMap) {
+  const map = storageMap || {};
+  const chapterProgress = safeParseJSON(map[STORAGE_KEYS.chapterProgress], {});
+  const chapterMeta = safeParseJSON(map[STORAGE_KEYS.chapterMeta], {});
+  const dailyLog = safeParseJSON(map[STORAGE_KEYS.dailyLog], []).map(normalizeDailyEntry).sort(compareLogEntriesDesc);
+  const xp = parseInt(map[STORAGE_KEYS.xp] || '0', 10);
+  const streak = parseInt(map[STORAGE_KEYS.streak] || '0', 10);
+  return {
+    chapterProgress,
+    chapterMeta,
+    dailyLog,
+    xp,
+    streak,
+    level: getLevelForXP(xp)
+  };
 }
 
 function addDailyEntry(entry) {
@@ -1111,13 +1343,22 @@ window.downloadProgressBackup = downloadProgressBackup;
 window.importProgressBackupFile = importProgressBackupFile;
 window.importProgressBackupText = importProgressBackupText;
 window.getCloudSyncState = getCloudSyncState;
+window.getPortalSnapshotFromStorageMap = getPortalSnapshotFromStorageMap;
 window.setPreferredDeviceLabel = setPreferredDeviceLabel;
 window.getPreferredDeviceLabel = getPreferredDeviceLabel;
+window.getChapterMeta = getChapterMeta;
+window.getChapterMetaRecord = getChapterMetaRecord;
+window.updateChapterMetaRecord = updateChapterMetaRecord;
+window.setChapterStatus = setChapterStatus;
+window.saveChapterQuizResult = saveChapterQuizResult;
 window.signInStudyPortalCloud = signInStudyPortalCloud;
 window.registerStudyPortalCloud = registerStudyPortalCloud;
 window.signOutStudyPortalCloud = signOutStudyPortalCloud;
 window.pushProgressToCloud = pushProgressToCloud;
 window.pullProgressFromCloud = pullProgressFromCloud;
+window.getLinkedParentEmails = getLinkedParentEmails;
+window.updateLinkedParentEmails = updateLinkedParentEmails;
+window.queryProfilesForParentEmail = queryProfilesForParentEmail;
 
 window.studyPortalCloud = {
   initialize: initializeCloudSync,
@@ -1129,7 +1370,10 @@ window.studyPortalCloud = {
   signOut: signOutStudyPortalCloud,
   push: pushProgressToCloud,
   pull: pullProgressFromCloud,
-  setDeviceLabel: setPreferredDeviceLabel
+  setDeviceLabel: setPreferredDeviceLabel,
+  getLinkedParentEmails,
+  updateLinkedParentEmails,
+  queryProfilesForParentEmail
 };
 
 installStorageSyncHooks();
