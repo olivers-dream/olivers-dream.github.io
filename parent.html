@@ -148,6 +148,42 @@
       </section>
 
       <section class="card">
+        <h3>Weekly Parent Plan</h3>
+        <p class="footer-note">Set goals and remarks for the current week. In linked-parent mode this is saved against the child cloud record without changing the existing progress history.</p>
+        <div class="form-row">
+          <div>
+            <label for="goalHoursInput">Target hours</label>
+            <input type="number" id="goalHoursInput" min="0" max="60" step="0.5" placeholder="12"/>
+          </div>
+          <div>
+            <label for="goalChaptersInput">Target chapters</label>
+            <input type="number" id="goalChaptersInput" min="0" max="20" step="1" placeholder="4"/>
+          </div>
+          <div>
+            <label for="goalInactivityInput">Alert after no study (days)</label>
+            <input type="number" id="goalInactivityInput" min="1" max="14" step="1" placeholder="3"/>
+          </div>
+        </div>
+        <div style="margin-top:12px;">
+          <label for="goalRemarkInput">Parent remark for this week</label>
+          <textarea id="goalRemarkInput" rows="2" placeholder="Example: Focus on Maths revision and finish two Science chapters."></textarea>
+        </div>
+        <div class="action-row" style="margin-top:12px;">
+          <button class="btn" id="saveParentPlanBtn">Save Weekly Plan</button>
+          <button class="btn secondary" id="refreshParentPlanBtn">Refresh Plan</button>
+          <button class="btn secondary" id="parentExportCsvBtn">Export CSV Report</button>
+          <button class="btn secondary" id="parentExportPdfBtn">Print PDF Report</button>
+        </div>
+        <p class="footer-note" id="parentPlanMessage"></p>
+      </section>
+
+      <section class="card">
+        <h3>Alerts &amp; Goal Check</h3>
+        <div class="status-box" id="goalAlertBoard">No weekly alerts yet.</div>
+        <p class="footer-note" id="goalSummaryNote"></p>
+      </section>
+
+      <section class="card">
         <h3>Subject Progress</h3>
         <div class="grid" id="subjectGrid"></div>
       </section>
@@ -209,6 +245,7 @@
     let parentCloudReady = false;
     let parentRemoteProfile = null;
     let parentDataSnapshot = null;
+    let parentPlan = null;
 
     function getParentPin() {
       return String((window.STUDY_PORTAL_CLOUD_CONFIG && window.STUDY_PORTAL_CLOUD_CONFIG.parentAccessPin) || '').trim();
@@ -241,6 +278,7 @@
       return {
         chapterProgress: getChapterProgress(),
         chapterMeta: getChapterMeta(),
+        parentGoals: getParentGoals(),
         dailyLog: getDailyLog().slice().sort((a, b) => {
           const left = (a.date || '') + 'T' + (a.time || '00:00');
           const right = (b.date || '') + 'T' + (b.time || '00:00');
@@ -253,7 +291,11 @@
     }
 
     function getSnapshot() {
-      return parentDataSnapshot || buildLocalSnapshot();
+      const snapshot = parentDataSnapshot || buildLocalSnapshot();
+      return {
+        ...snapshot,
+        parentGoals: parentPlan || snapshot.parentGoals || getParentGoals()
+      };
     }
 
     function getSubjectPrefixFromEntry(subjectName) {
@@ -278,6 +320,55 @@
     function chapterLabelFromKey(chapterKey) {
       const fileName = String(chapterKey || '').split('/').pop() || '';
       return fileName.replace('.html', '').replace(/[-_]/g, ' ').replace(/\b\w/g, match => match.toUpperCase());
+    }
+
+    function normalizeParentPlan(plan) {
+      const source = plan && typeof plan === 'object' ? plan : {};
+      const weeks = source.weeks && typeof source.weeks === 'object' ? source.weeks : {};
+      const normalizedWeeks = {};
+      Object.keys(weeks).forEach(weekKey => {
+        const item = weeks[weekKey] && typeof weeks[weekKey] === 'object' ? weeks[weekKey] : {};
+        normalizedWeeks[weekKey] = {
+          hoursTarget: Number(item.hoursTarget || 0),
+          chaptersTarget: Number(item.chaptersTarget || 0),
+          remark: String(item.remark || '').trim(),
+          updatedAt: Number(item.updatedAt || 0)
+        };
+      });
+      return {
+        inactivityThresholdDays: Math.max(1, Number(source.inactivityThresholdDays || 3)),
+        weeks: normalizedWeeks
+      };
+    }
+
+    function hasParentPlanData(plan) {
+      const normalized = normalizeParentPlan(plan);
+      return normalized.inactivityThresholdDays !== 3 || Object.keys(normalized.weeks).length > 0;
+    }
+
+    function getCurrentWeekPlan(plan) {
+      const normalized = normalizeParentPlan(plan);
+      const weekKey = getWeekKey();
+      return {
+        weekKey,
+        ...((normalized.weeks && normalized.weeks[weekKey]) || {
+          hoursTarget: 0,
+          chaptersTarget: 0,
+          remark: '',
+          updatedAt: 0
+        }),
+        inactivityThresholdDays: normalized.inactivityThresholdDays
+      };
+    }
+
+    function getWeekRangeForKey(weekKey) {
+      const start = new Date(weekKey + 'T00:00:00');
+      const end = new Date(start);
+      end.setDate(start.getDate() + 7);
+      return {
+        startMs: start.getTime(),
+        endMs: end.getTime()
+      };
     }
 
     function getMondayKey(dateValue) {
@@ -395,6 +486,91 @@
       setTimeout(() => URL.revokeObjectURL(link.href), 1000);
     }
 
+    function escapeCsvValue(value) {
+      const text = String(value == null ? '' : value);
+      return '"' + text.replace(/"/g, '""') + '"';
+    }
+
+    function downloadCsvFile(fileName, rows) {
+      const csv = rows.map(row => row.map(escapeCsvValue).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    }
+
+    function exportParentCsvReport(snapshot) {
+      const currentWeekPlan = getCurrentWeekPlan(snapshot.parentGoals);
+      const weeklySeries = buildWeeklySeries(snapshot.dailyLog || [], 8);
+      const currentWeek = weeklySeries[weeklySeries.length - 1] || { hours: 0 };
+      const subjectRows = SUBJECTS.map(subject => {
+        const stats = getSubjectStatsFromSnapshot(snapshot, subject);
+        return [subject.label, stats.done, stats.total, stats.percent + '%', stats.hours.toFixed(1), stats.averageQuiz + '%', stats.attentionCount];
+      });
+
+      const rows = [
+        ['Section', 'Key', 'Value'],
+        ['Summary', 'Generated At', new Date().toLocaleString('en-IN')],
+        ['Summary', 'Total Chapters', Object.keys(snapshot.chapterProgress || {}).filter(key => snapshot.chapterProgress[key]).length],
+        ['Summary', 'Total Hours', (snapshot.dailyLog || []).reduce((sum, entry) => sum + Number(entry.hours || 0), 0).toFixed(1)],
+        ['Summary', 'Streak', snapshot.streak || 0],
+        ['Summary', 'XP', snapshot.xp || 0],
+        ['Weekly Plan', 'Week', currentWeekPlan.weekKey],
+        ['Weekly Plan', 'Target Hours', currentWeekPlan.hoursTarget],
+        ['Weekly Plan', 'Target Chapters', currentWeekPlan.chaptersTarget],
+        ['Weekly Plan', 'Inactivity Alert Days', currentWeekPlan.inactivityThresholdDays],
+        ['Weekly Plan', 'Remark', currentWeekPlan.remark || ''],
+        ['Weekly Progress', 'Current Week Hours', currentWeek.hours.toFixed(1)],
+        ['Subject', 'Completed', 'Total', 'Percent', 'Hours', 'Average Quiz', 'Flagged Chapters'],
+        ...subjectRows,
+        ['Recent Log', 'Date', 'Subject', 'Hours', 'Notes', 'Time']
+      ];
+
+      (snapshot.dailyLog || []).slice(0, 20).forEach(entry => {
+        rows.push(['Recent Log', friendlyDate(entry.date), entry.subject, Number(entry.hours || 0).toFixed(1), entry.notes || '', entry.time || '']);
+      });
+
+      downloadCsvFile('parent-study-report-' + formatDate(new Date()) + '.csv', rows);
+    }
+
+    function printParentPdfReport(snapshot) {
+      const currentWeekPlan = getCurrentWeekPlan(snapshot.parentGoals);
+      const subjectCards = SUBJECTS.map(subject => {
+        const stats = getSubjectStatsFromSnapshot(snapshot, subject);
+        return '<tr><td>' + subject.label + '</td><td>' + stats.done + ' / ' + stats.total + '</td><td>' + stats.percent + '%</td><td>' + stats.hours.toFixed(1) + '</td><td>' + stats.averageQuiz + '%</td><td>' + stats.attentionCount + '</td></tr>';
+      }).join('');
+      const logRows = (snapshot.dailyLog || []).slice(0, 12).map(entry =>
+        '<tr><td>' + friendlyDate(entry.date) + '</td><td>' + entry.subject + '</td><td>' + Number(entry.hours || 0).toFixed(1) + '</td><td>' + (entry.notes || '—') + '</td><td>' + (entry.time || '—') + '</td></tr>'
+      ).join('');
+
+      const reportWindow = window.open('', '_blank');
+      if (!reportWindow) {
+        throw new Error('Allow pop-ups to print the PDF report.');
+      }
+
+      reportWindow.document.write(
+        '<html><head><title>Parent Study Report</title><style>' +
+        'body{font-family:Arial,sans-serif;padding:24px;color:#111827}h1,h2{margin:0 0 12px}p{margin:0 0 8px}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #d1d5db;padding:8px;text-align:left;font-size:12px}.meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0}.panel{border:1px solid #d1d5db;border-radius:10px;padding:14px}' +
+        '</style></head><body>' +
+        '<h1>Oliver&apos;s Dream Parent Study Report</h1>' +
+        '<p>Generated: ' + new Date().toLocaleString('en-IN') + '</p>' +
+        '<div class="meta">' +
+          '<div class="panel"><strong>Current Week Goal</strong><p>Hours target: ' + currentWeekPlan.hoursTarget + '</p><p>Chapter target: ' + currentWeekPlan.chaptersTarget + '</p><p>Remark: ' + (currentWeekPlan.remark || '—') + '</p></div>' +
+          '<div class="panel"><strong>Overall Progress</strong><p>XP: ' + (snapshot.xp || 0) + '</p><p>Streak: ' + (snapshot.streak || 0) + ' days</p><p>Total study entries: ' + (snapshot.dailyLog || []).length + '</p></div>' +
+        '</div>' +
+        '<h2>Subject Overview</h2>' +
+        '<table><thead><tr><th>Subject</th><th>Progress</th><th>Percent</th><th>Hours</th><th>Quiz Avg</th><th>Flags</th></tr></thead><tbody>' + subjectCards + '</tbody></table>' +
+        '<h2 style="margin-top:22px;">Recent Study Log</h2>' +
+        '<table><thead><tr><th>Date</th><th>Subject</th><th>Hours</th><th>Notes</th><th>Time</th></tr></thead><tbody>' + logRows + '</tbody></table>' +
+        '</body></html>'
+      );
+      reportWindow.document.close();
+      reportWindow.focus();
+      reportWindow.print();
+    }
+
     function renderParentStatus() {
       if (!parentCloudReady) {
         document.getElementById('parentSyncStatus').textContent = 'Parent view is ready. Use local data now, or sign in with a linked parent account and click Pull Latest Now.';
@@ -482,6 +658,60 @@
       document.getElementById('weeklyTrendNote').textContent = 'Shows the last ' + weeklySeries.length + ' study weeks ending with the current week.';
     }
 
+    function renderParentPlan(snapshot) {
+      const normalized = normalizeParentPlan(snapshot.parentGoals);
+      const currentWeekPlan = getCurrentWeekPlan(normalized);
+      parentPlan = normalized;
+      document.getElementById('goalHoursInput').value = currentWeekPlan.hoursTarget || '';
+      document.getElementById('goalChaptersInput').value = currentWeekPlan.chaptersTarget || '';
+      document.getElementById('goalInactivityInput').value = currentWeekPlan.inactivityThresholdDays || 3;
+      document.getElementById('goalRemarkInput').value = currentWeekPlan.remark || '';
+      document.getElementById('parentPlanMessage').textContent = currentWeekPlan.updatedAt
+        ? ('Plan saved for week starting ' + friendlyDate(currentWeekPlan.weekKey) + '.')
+        : 'No plan saved for the current week yet.';
+    }
+
+    function renderGoalAlerts(snapshot) {
+      const currentWeekPlan = getCurrentWeekPlan(snapshot.parentGoals);
+      const weeklySeries = buildWeeklySeries(snapshot.dailyLog || [], 8);
+      const currentWeek = weeklySeries[weeklySeries.length - 1] || { hours: 0 };
+      const range = getWeekRangeForKey(currentWeekPlan.weekKey);
+      const chapterTouches = Object.keys(snapshot.chapterMeta || {})
+        .filter(key => {
+          const updatedAt = Number(((snapshot.chapterMeta || {})[key] || {}).updatedAt || 0);
+          return updatedAt >= range.startMs && updatedAt < range.endMs;
+        }).length;
+      const latest = (snapshot.dailyLog || [])[0];
+      const inactivityThreshold = Math.max(1, Number(currentWeekPlan.inactivityThresholdDays || 3));
+      let inactiveDays = 0;
+      if (latest && latest.date) {
+        inactiveDays = Math.floor((Date.now() - new Date(latest.date + 'T00:00:00').getTime()) / 86400000);
+      }
+
+      const alerts = [];
+      if (!latest) {
+        alerts.push('No study log entries yet.');
+      } else if (inactiveDays >= inactivityThreshold) {
+        alerts.push('No study activity for ' + inactiveDays + ' days.');
+      }
+      if (currentWeekPlan.hoursTarget > 0 && currentWeek.hours < currentWeekPlan.hoursTarget) {
+        alerts.push('Weekly hours are behind target by ' + (currentWeekPlan.hoursTarget - currentWeek.hours).toFixed(1) + ' hrs.');
+      }
+      if (currentWeekPlan.chaptersTarget > 0 && chapterTouches < currentWeekPlan.chaptersTarget) {
+        alerts.push('Only ' + chapterTouches + ' / ' + currentWeekPlan.chaptersTarget + ' chapters touched this week.');
+      }
+      if (currentWeekPlan.remark) {
+        alerts.push('Parent remark: ' + currentWeekPlan.remark);
+      }
+
+      document.getElementById('goalAlertBoard').innerHTML = alerts.length
+        ? alerts.map(item => '&bull; ' + item).join('<br>')
+        : 'On track this week. No inactivity or goal alerts right now.';
+      document.getElementById('goalSummaryNote').textContent =
+        'Current week: ' + currentWeek.hours.toFixed(1) + ' / ' + currentWeekPlan.hoursTarget + ' hrs · ' +
+        chapterTouches + ' / ' + currentWeekPlan.chaptersTarget + ' chapters touched.';
+    }
+
     function renderSubjectGrid(snapshot) {
       const grid = document.getElementById('subjectGrid');
       grid.innerHTML = '';
@@ -562,6 +792,8 @@
       renderParentStatus();
       renderOverview(snapshot);
       renderWeeklyAnalytics(snapshot);
+      renderParentPlan(snapshot);
+      renderGoalAlerts(snapshot);
       renderSubjectGrid(snapshot);
       renderAttentionBoard(snapshot);
       renderRecentLog(snapshot);
@@ -577,7 +809,11 @@
       const linkedProfiles = await queryProfilesForParentEmail(state.email || '');
       if (linkedProfiles.length) {
         parentRemoteProfile = linkedProfiles[0];
-        parentDataSnapshot = getPortalSnapshotFromStorageMap(parentRemoteProfile.storageMap);
+        parentPlan = normalizeParentPlan(parentRemoteProfile.parentGoals);
+        parentDataSnapshot = {
+          ...getPortalSnapshotFromStorageMap(parentRemoteProfile.storageMap),
+          parentGoals: parentPlan
+        };
         parentCloudReady = true;
         showParentAuthMessage('Loaded linked child record for parent email ' + (state.email || '') + '.');
         renderParentPage();
@@ -586,10 +822,81 @@
 
       await pullProgressFromCloud();
       parentRemoteProfile = null;
+      try {
+        const remotePlan = await getCurrentCloudParentGoals();
+        parentPlan = hasParentPlanData(remotePlan) ? normalizeParentPlan(remotePlan) : getParentGoals();
+      } catch (err) {
+        parentPlan = getParentGoals();
+      }
       parentDataSnapshot = null;
       parentCloudReady = true;
       showParentAuthMessage('Loaded current account cloud record.');
       renderParentPage();
+    }
+
+    async function saveCurrentParentPlan() {
+      const basePlan = normalizeParentPlan(parentPlan || getSnapshot().parentGoals || getParentGoals());
+      const weekKey = getWeekKey();
+      basePlan.inactivityThresholdDays = Math.max(1, Number(document.getElementById('goalInactivityInput').value || basePlan.inactivityThresholdDays || 3));
+      basePlan.weeks[weekKey] = {
+        hoursTarget: Math.max(0, Number(document.getElementById('goalHoursInput').value || 0)),
+        chaptersTarget: Math.max(0, Number(document.getElementById('goalChaptersInput').value || 0)),
+        remark: String(document.getElementById('goalRemarkInput').value || '').trim(),
+        updatedAt: Date.now()
+      };
+
+      if (parentRemoteProfile && parentRemoteProfile.name) {
+        parentPlan = await updateCloudParentGoalsByDocumentName(parentRemoteProfile.name, basePlan);
+        parentRemoteProfile.parentGoals = parentPlan;
+        if (parentDataSnapshot) {
+          parentDataSnapshot = {
+            ...parentDataSnapshot,
+            parentGoals: parentPlan
+          };
+        }
+        return;
+      }
+
+      saveParentGoalForWeek(weekKey, {
+        hoursTarget: basePlan.weeks[weekKey].hoursTarget,
+        chaptersTarget: basePlan.weeks[weekKey].chaptersTarget,
+        remark: basePlan.weeks[weekKey].remark,
+        inactivityThresholdDays: basePlan.inactivityThresholdDays
+      });
+      parentPlan = getParentGoals();
+
+      if (getCloudSyncState().signedIn) {
+        try {
+          await pushProgressToCloud();
+        } catch (err) {
+          document.getElementById('parentPlanMessage').textContent = err.message || 'Plan saved locally only.';
+        }
+      }
+    }
+
+    async function refreshCurrentParentPlan() {
+      if (parentRemoteProfile && parentRemoteProfile.name) {
+        parentPlan = await getCloudParentGoalsByDocumentName(parentRemoteProfile.name);
+        if (parentDataSnapshot) {
+          parentDataSnapshot = {
+            ...parentDataSnapshot,
+            parentGoals: parentPlan
+          };
+        }
+        return;
+      }
+
+      if (getCloudSyncState().signedIn) {
+        try {
+          const remotePlan = await getCurrentCloudParentGoals();
+          parentPlan = hasParentPlanData(remotePlan) ? normalizeParentPlan(remotePlan) : getParentGoals();
+          return;
+        } catch (err) {
+          // Fall back to local goals if the current account cloud field is not reachable.
+        }
+      }
+
+      parentPlan = getParentGoals();
     }
 
     document.getElementById('parentUnlockBtn').addEventListener('click', () => {
@@ -648,6 +955,7 @@
         parentCloudReady = false;
         parentRemoteProfile = null;
         parentDataSnapshot = null;
+        parentPlan = null;
         showParentAuthMessage('Signed out.');
         renderParentPage();
       } catch (err) {
@@ -668,6 +976,7 @@
     document.getElementById('parentUseLocalBtn').addEventListener('click', () => {
       parentRemoteProfile = null;
       parentDataSnapshot = null;
+      parentPlan = getParentGoals();
       parentCloudReady = false;
       showParentAuthMessage('Using local browser snapshot only.');
       renderParentPage();
@@ -693,11 +1002,47 @@
       showParentAuthMessage('Exported the local browser snapshot.');
     });
 
+    document.getElementById('saveParentPlanBtn').addEventListener('click', async () => {
+      try {
+        showParentAuthMessage('Saving weekly plan...');
+        await saveCurrentParentPlan();
+        renderParentPage();
+        showParentAuthMessage('Weekly plan saved.');
+      } catch (err) {
+        showParentAuthMessage(err.message || 'Could not save the weekly plan.');
+      }
+    });
+
+    document.getElementById('refreshParentPlanBtn').addEventListener('click', async () => {
+      try {
+        await refreshCurrentParentPlan();
+        renderParentPage();
+        showParentAuthMessage('Weekly plan refreshed.');
+      } catch (err) {
+        showParentAuthMessage(err.message || 'Could not refresh the weekly plan.');
+      }
+    });
+
+    document.getElementById('parentExportCsvBtn').addEventListener('click', () => {
+      exportParentCsvReport(getSnapshot());
+      showParentAuthMessage('CSV report exported.');
+    });
+
+    document.getElementById('parentExportPdfBtn').addEventListener('click', () => {
+      try {
+        printParentPdfReport(getSnapshot());
+        showParentAuthMessage('PDF print dialog opened.');
+      } catch (err) {
+        showParentAuthMessage(err.message || 'Could not open the PDF report.');
+      }
+    });
+
     document.getElementById('parentLockBtn').addEventListener('click', () => {
       sessionStorage.removeItem(PARENT_UNLOCK_KEY);
       parentCloudReady = false;
       parentRemoteProfile = null;
       parentDataSnapshot = null;
+      parentPlan = null;
       showParentLock('Parent view locked.');
     });
 

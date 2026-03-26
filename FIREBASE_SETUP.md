@@ -14,11 +14,10 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /studyPortalProfiles/{userId} {
-      allow read: if request.auth != null && (
+      allow read, write: if request.auth != null && (
         request.auth.uid == userId ||
         (resource.data.parentEmails is list && request.auth.token.email in resource.data.parentEmails)
       );
-      allow write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
@@ -53,8 +52,9 @@ Parent access setup
 5. Unlock the page with the parent PIN.
 6. Create or sign in with that separate parent email and password.
 7. Click `Load Linked Child Record`.
+8. Parent weekly goals and remarks can now be saved from `parent.html`.
 
-This does not reset the child progress record. It only grants read access for the listed parent email.
+This does not reset the child progress record. It grants the listed parent email access to the child dashboard and parent plan fields.
 
 How to move existing progress from the old computer
 --------------------------------------------------

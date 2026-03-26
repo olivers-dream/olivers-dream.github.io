@@ -180,6 +180,27 @@
       </article>
     </section>
 
+    <section class="card portal-search-card stagger">
+      <div class="chapter-overview-head">
+        <div>
+          <p class="enhancer-eyebrow">Library Search</p>
+          <h3>Search Chapters &amp; Worksheets</h3>
+        </div>
+        <span class="tag easy">Instant lookup</span>
+      </div>
+      <p class="footer-note">Search by chapter name, worksheet, subject, keyword, or unit title.</p>
+      <div class="form-row" style="margin-top:12px;">
+        <div>
+          <label for="portalSearchInput">Search the full portal</label>
+          <input type="search" id="portalSearchInput" placeholder="Try: triangles, anne frank, nationalism, worksheet"/>
+        </div>
+      </div>
+      <p class="footer-note" id="portalSearchMeta">Type at least 2 letters to search across chapters, units, and worksheets.</p>
+      <div class="portal-search-results" id="portalSearchResults">
+        <div class="status-box">Search results will appear here.</div>
+      </div>
+    </section>
+
     <!-- ── 4. WEEKLY QUESTS (NEW) ── -->
     <section class="weekly-quests stagger" aria-label="Weekly Quests">
       <div class="section-header">
@@ -364,6 +385,8 @@
 
   </main>
 
+  <script src="assets/search-index.js"></script>
+  <script src="assets/search-tools.js"></script>
   <script src="assets/app.js"></script>
   <script>
     // ═══════════════════════════════════════════════════════════

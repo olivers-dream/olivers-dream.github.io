@@ -52,9 +52,17 @@ listFiles('worksheets/maths')
   });
 
 assertIncludes('assets/app.js', 'study_portal_chapter_meta_v1', 'missing chapter meta storage key');
+assertIncludes('assets/app.js', 'study_portal_parent_goals_v1', 'missing parent goals storage key');
 assertIncludes('assets/app.js', 'queryProfilesForParentEmail', 'missing parent account query helper');
 assertIncludes('assets/content-tools.js', 'Quick Mastery Check', 'missing shared chapter enhancer content');
+assertIncludes('assets/content-tools.js', 'Must Memorize', 'missing shared memorization content');
+assertIncludes('assets/content-tools.js', 'chapter-sticky-progress', 'missing sticky chapter progress');
+assertIncludes('assets/search-tools.js', 'portalSearchInput', 'missing dashboard search script');
+assertIncludes('assets/search-index.js', 'window.STUDY_PORTAL_SEARCH_INDEX', 'missing generated search index');
+assertIncludes('index.html', 'portalSearchInput', 'missing dashboard search UI');
 assertIncludes('sync.html', 'Parent Viewer Access', 'missing parent email linking section');
+assertIncludes('parent.html', 'goalAlertBoard', 'missing parent alerts section');
+assertIncludes('parent.html', 'parentExportCsvBtn', 'missing parent report export buttons');
 
 if (errors.length) {
   console.error('Validation failed:\n' + errors.map(item => '- ' + item).join('\n'));

@@ -7,6 +7,7 @@ const RESET_FLAG_KEY = 'study_portal_reset_done_v1';
 const STORAGE_KEYS = {
   chapterProgress: 'study_portal_chapter_progress_v1',
   chapterMeta: 'study_portal_chapter_meta_v1',
+  parentGoals: 'study_portal_parent_goals_v1',
   dailyLog: 'study_portal_daily_log_v1',
   xp: 'study_portal_xp_v1',
   streak: 'study_portal_streak_v1',
@@ -255,6 +256,50 @@ function mergeChapterMetaValues(localValue, incomingValue) {
   return JSON.stringify(merged);
 }
 
+function normalizeParentGoalsShape(value) {
+  const parsed = value && typeof value === 'object' ? value : {};
+  const weeks = {};
+  const sourceWeeks = parsed.weeks && typeof parsed.weeks === 'object' ? parsed.weeks : {};
+
+  Object.keys(sourceWeeks).forEach(weekKey => {
+    const item = sourceWeeks[weekKey] && typeof sourceWeeks[weekKey] === 'object' ? sourceWeeks[weekKey] : {};
+    weeks[weekKey] = {
+      hoursTarget: Number(item.hoursTarget || 0),
+      chaptersTarget: Number(item.chaptersTarget || 0),
+      remark: String(item.remark || '').trim(),
+      updatedAt: Number(item.updatedAt || 0)
+    };
+  });
+
+  return {
+    inactivityThresholdDays: Math.max(1, Number(parsed.inactivityThresholdDays || 3)),
+    weeks
+  };
+}
+
+function mergeParentGoalsValues(localValue, incomingValue) {
+  const localGoals = normalizeParentGoalsShape(safeParseJSON(localValue, {}));
+  const incomingGoals = normalizeParentGoalsShape(safeParseJSON(incomingValue, {}));
+  const merged = {
+    inactivityThresholdDays: Math.max(localGoals.inactivityThresholdDays || 0, incomingGoals.inactivityThresholdDays || 0, 3),
+    weeks: { ...localGoals.weeks }
+  };
+
+  Object.keys(incomingGoals.weeks).forEach(weekKey => {
+    const localWeek = merged.weeks[weekKey];
+    const incomingWeek = incomingGoals.weeks[weekKey];
+    if (!localWeek) {
+      merged.weeks[weekKey] = incomingWeek;
+      return;
+    }
+    merged.weeks[weekKey] = Number(localWeek.updatedAt || 0) >= Number(incomingWeek.updatedAt || 0)
+      ? localWeek
+      : incomingWeek;
+  });
+
+  return JSON.stringify(merged);
+}
+
 function mergeDailyLogValues(localValue, incomingValue) {
   const localEntries = safeParseJSON(localValue, []);
   const incomingEntries = safeParseJSON(incomingValue, []);
@@ -311,6 +356,7 @@ function mergeStorageValue(key, localValue, incomingValue) {
   }
   if (key === STORAGE_KEYS.chapterProgress) return mergeChapterProgressValues(localValue, incomingValue);
   if (key === STORAGE_KEYS.chapterMeta) return mergeChapterMetaValues(localValue, incomingValue);
+  if (key === STORAGE_KEYS.parentGoals) return mergeParentGoalsValues(localValue, incomingValue);
   if (key === STORAGE_KEYS.dailyLog) return mergeDailyLogValues(localValue, incomingValue);
   if (key === STORAGE_KEYS.xp) return mergeNumericValues(localValue, incomingValue);
   if (key === STORAGE_KEYS.streak) return mergeNumericValues(localValue, incomingValue);
@@ -587,6 +633,12 @@ function extractRemoteParentEmails(docData) {
   return Array.isArray(decoded) ? decoded.filter(Boolean).map(item => String(item).trim().toLowerCase()) : [];
 }
 
+function extractRemoteParentGoals(docData) {
+  if (!docData || typeof docData !== 'object') return normalizeParentGoalsShape({});
+  const fields = docData.fields || {};
+  return normalizeParentGoalsShape(decodeFirestoreValue(fields.parentGoals));
+}
+
 async function fetchCloudDocument() {
   const response = await fetch(getCloudDocumentUrl(), {
     method: 'GET',
@@ -605,8 +657,49 @@ async function fetchCloudDocument() {
   return response.json();
 }
 
+async function fetchCloudDocumentByName(documentName) {
+  if (!documentName) throw new Error('Cloud document name is missing.');
+  const response = await fetch(`https://firestore.googleapis.com/v1/${documentName}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${await getCloudAuthToken()}`
+    }
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Cloud read failed (${response.status}): ${text.slice(0, 180)}`);
+  }
+
+  return response.json();
+}
+
 async function patchCurrentCloudDocumentFields(fields, updateMaskFieldPaths) {
   const url = new URL(getCloudDocumentUrl());
+  (updateMaskFieldPaths || Object.keys(fields || {})).forEach(field => {
+    url.searchParams.append('updateMask.fieldPaths', field);
+  });
+
+  const response = await fetch(url.toString(), {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${await getCloudAuthToken()}`
+    },
+    body: JSON.stringify({ fields })
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Cloud update failed (${response.status}): ${text.slice(0, 180)}`);
+  }
+
+  return response.json();
+}
+
+async function patchCloudDocumentFieldsByName(documentName, fields, updateMaskFieldPaths) {
+  if (!documentName) throw new Error('Cloud document name is missing.');
+  const url = new URL(`https://firestore.googleapis.com/v1/${documentName}`);
   (updateMaskFieldPaths || Object.keys(fields || {})).forEach(field => {
     url.searchParams.append('updateMask.fieldPaths', field);
   });
@@ -647,6 +740,38 @@ async function updateLinkedParentEmails(emails) {
     parentEmails: encodeFirestoreValue(normalized)
   }, ['parentEmails']);
 
+  return normalized;
+}
+
+async function getCurrentCloudParentGoals() {
+  await initializeCloudSync();
+  if (!syncState.user) throw new Error('Sign in first.');
+  return extractRemoteParentGoals(await fetchCloudDocument());
+}
+
+async function updateCurrentCloudParentGoals(goals) {
+  await initializeCloudSync();
+  if (!syncState.user) throw new Error('Sign in first.');
+  const normalized = normalizeParentGoalsShape(goals);
+  await patchCurrentCloudDocumentFields({
+    parentGoals: encodeFirestoreValue(normalized)
+  }, ['parentGoals']);
+  return normalized;
+}
+
+async function getCloudParentGoalsByDocumentName(documentName) {
+  await initializeCloudSync();
+  if (!syncState.user) throw new Error('Sign in first.');
+  return extractRemoteParentGoals(await fetchCloudDocumentByName(documentName));
+}
+
+async function updateCloudParentGoalsByDocumentName(documentName, goals) {
+  await initializeCloudSync();
+  if (!syncState.user) throw new Error('Sign in first.');
+  const normalized = normalizeParentGoalsShape(goals);
+  await patchCloudDocumentFieldsByName(documentName, {
+    parentGoals: encodeFirestoreValue(normalized)
+  }, ['parentGoals']);
   return normalized;
 }
 
@@ -693,6 +818,7 @@ async function queryProfilesForParentEmail(parentEmail) {
       storageMap: extractRemoteStorageMap(doc),
       updatedAtMs: extractRemoteUpdatedAtMs(doc),
       parentEmails: extractRemoteParentEmails(doc),
+      parentGoals: extractRemoteParentGoals(doc),
       doc
     }));
 }
@@ -1026,6 +1152,39 @@ function setChapterMeta(meta) {
   localStorage.setItem(STORAGE_KEYS.chapterMeta, JSON.stringify(meta));
 }
 
+function getParentGoals() {
+  const raw = localStorage.getItem(STORAGE_KEYS.parentGoals);
+  return normalizeParentGoalsShape(raw ? JSON.parse(raw) : {});
+}
+
+function setParentGoals(goals) {
+  localStorage.setItem(STORAGE_KEYS.parentGoals, JSON.stringify(normalizeParentGoalsShape(goals)));
+}
+
+function getParentGoalForWeek(weekKey) {
+  const goals = getParentGoals();
+  return (goals.weeks && goals.weeks[weekKey]) ? goals.weeks[weekKey] : {
+    hoursTarget: 0,
+    chaptersTarget: 0,
+    remark: '',
+    updatedAt: 0
+  };
+}
+
+function saveParentGoalForWeek(weekKey, updates) {
+  const goals = getParentGoals();
+  goals.inactivityThresholdDays = Math.max(1, Number((updates && updates.inactivityThresholdDays) || goals.inactivityThresholdDays || 3));
+  goals.weeks[weekKey] = {
+    ...getParentGoalForWeek(weekKey),
+    hoursTarget: Math.max(0, Number((updates && updates.hoursTarget) || 0)),
+    chaptersTarget: Math.max(0, Number((updates && updates.chaptersTarget) || 0)),
+    remark: String((updates && updates.remark) || '').trim(),
+    updatedAt: Date.now()
+  };
+  setParentGoals(goals);
+  return goals;
+}
+
 function getChapterMetaRecord(chapterKey) {
   const meta = getChapterMeta();
   return (meta && typeof meta[chapterKey] === 'object' && meta[chapterKey]) ? meta[chapterKey] : {};
@@ -1085,12 +1244,14 @@ function getPortalSnapshotFromStorageMap(storageMap) {
   const map = storageMap || {};
   const chapterProgress = safeParseJSON(map[STORAGE_KEYS.chapterProgress], {});
   const chapterMeta = safeParseJSON(map[STORAGE_KEYS.chapterMeta], {});
+  const parentGoals = normalizeParentGoalsShape(safeParseJSON(map[STORAGE_KEYS.parentGoals], {}));
   const dailyLog = safeParseJSON(map[STORAGE_KEYS.dailyLog], []).map(normalizeDailyEntry).sort(compareLogEntriesDesc);
   const xp = parseInt(map[STORAGE_KEYS.xp] || '0', 10);
   const streak = parseInt(map[STORAGE_KEYS.streak] || '0', 10);
   return {
     chapterProgress,
     chapterMeta,
+    parentGoals,
     dailyLog,
     xp,
     streak,
@@ -1351,6 +1512,13 @@ window.getChapterMetaRecord = getChapterMetaRecord;
 window.updateChapterMetaRecord = updateChapterMetaRecord;
 window.setChapterStatus = setChapterStatus;
 window.saveChapterQuizResult = saveChapterQuizResult;
+window.getParentGoals = getParentGoals;
+window.getParentGoalForWeek = getParentGoalForWeek;
+window.saveParentGoalForWeek = saveParentGoalForWeek;
+window.getCurrentCloudParentGoals = getCurrentCloudParentGoals;
+window.updateCurrentCloudParentGoals = updateCurrentCloudParentGoals;
+window.getCloudParentGoalsByDocumentName = getCloudParentGoalsByDocumentName;
+window.updateCloudParentGoalsByDocumentName = updateCloudParentGoalsByDocumentName;
 window.signInStudyPortalCloud = signInStudyPortalCloud;
 window.registerStudyPortalCloud = registerStudyPortalCloud;
 window.signOutStudyPortalCloud = signOutStudyPortalCloud;
@@ -1373,7 +1541,11 @@ window.studyPortalCloud = {
   setDeviceLabel: setPreferredDeviceLabel,
   getLinkedParentEmails,
   updateLinkedParentEmails,
-  queryProfilesForParentEmail
+  queryProfilesForParentEmail,
+  getCurrentCloudParentGoals,
+  updateCurrentCloudParentGoals,
+  getCloudParentGoalsByDocumentName,
+  updateCloudParentGoalsByDocumentName
 };
 
 installStorageSyncHooks();
