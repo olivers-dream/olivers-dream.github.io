@@ -35,6 +35,7 @@ const storageBridge = {
 
 const syncState = {
   bootstrapPromise: null,
+  authReadyPromise: null,
   auth: null,
   user: null,
   config: null,
@@ -711,20 +712,28 @@ async function initializeCloudSync() {
       syncState.auth = window.firebase.auth(app);
 
       await syncState.auth.setPersistence(window.firebase.auth.Auth.Persistence.LOCAL);
-      syncState.auth.onAuthStateChanged(user => {
-        if (user) {
-          handleSignedInUser(user).catch(err => {
+      let initialAuthResolved = false;
+      syncState.authReadyPromise = new Promise(resolve => {
+        syncState.auth.onAuthStateChanged(async user => {
+          try {
+            if (user) {
+              await handleSignedInUser(user);
+            } else {
+              await handleSignedOutUser();
+            }
+          } catch (err) {
             setSyncState('error', err.message || 'Cloud sync failed.');
-          });
-        } else {
-          handleSignedOutUser().catch(err => {
-            setSyncState('error', err.message || 'Cloud sign-out failed.');
-          });
-        }
+          } finally {
+            if (!initialAuthResolved) {
+              initialAuthResolved = true;
+              resolve(syncState);
+            }
+          }
+        });
       });
 
+      await syncState.authReadyPromise;
       syncState.bootstrapped = true;
-      setSyncState('needs-auth', 'Cloud sync is configured. Sign in on the Sync page to connect devices.');
     } catch (err) {
       syncState.bootstrapped = true;
       setSyncState('error', err.message || 'Cloud sync could not be started.');
@@ -1121,4 +1130,6 @@ window.studyPortalCloud = {
 
 installStorageSyncHooks();
 checkLaunchReset();
-initializeCloudSync();
+if (!window.STUDY_PORTAL_DISABLE_AUTO_CLOUD_INIT) {
+  initializeCloudSync();
+}

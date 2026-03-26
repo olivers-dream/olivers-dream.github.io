@@ -93,6 +93,9 @@
     </section>
   </main>
 
+  <script>
+    window.STUDY_PORTAL_DISABLE_AUTO_CLOUD_INIT = true;
+  </script>
   <script src="assets/app.js"></script>
   <script>
     const SUBJECTS = [
@@ -106,8 +109,14 @@
       { key: 'fp', prefix: 'fp', total: 9, label: 'Footprints', icon: '👣' },
       { key: 'we', prefix: 'we', total: 9, label: 'Words & Expressions', icon: '✍️' }
     ];
+    let parentCloudReady = false;
 
     function renderParentStatus() {
+      if (!parentCloudReady) {
+        document.getElementById('parentSyncStatus').textContent = 'Parent view is ready. Click Pull Latest Now to load the shared cloud record.';
+        document.getElementById('parentSyncHint').textContent = 'This page starts in local mode to keep navigation responsive.';
+        return;
+      }
       const sync = getCloudSyncState();
       document.getElementById('parentSyncStatus').textContent = sync.message;
       document.getElementById('parentSyncHint').textContent = sync.configured
@@ -116,7 +125,9 @@
     }
 
     function renderOverview() {
-      const xpData = getXPData();
+      const xp = getXP();
+      const streak = getStreak();
+      const level = getLevelForXP(xp);
       const dailyLog = getDailyLog();
       const progress = getChapterProgress();
       const totalChapters = SUBJECTS.reduce((sum, subject) => sum + subject.total, 0);
@@ -129,8 +140,8 @@
       document.getElementById('overallPercent').textContent = percent + '% complete';
       document.getElementById('parentHours').textContent = totalHours.toFixed(1) + ' hrs';
       document.getElementById('parentEntries').textContent = dailyLog.length + ' log entries';
-      document.getElementById('parentStreak').textContent = xpData.streak + ' days';
-      document.getElementById('parentLevel').textContent = 'Level: ' + xpData.level + ' · XP: ' + xpData.xp;
+      document.getElementById('parentStreak').textContent = streak + ' days';
+      document.getElementById('parentLevel').textContent = 'Level: ' + level + ' · XP: ' + xp;
       document.getElementById('latestDay').textContent = latest ? friendlyDate(latest.date) : '—';
       document.getElementById('latestSubject').textContent = latest
         ? (latest.subject + ' · ' + latest.hours + ' hrs')
@@ -191,7 +202,10 @@
 
     document.getElementById('parentPullBtn').addEventListener('click', async () => {
       try {
+        await studyPortalCloud.initialize();
+        parentCloudReady = true;
         await pullProgressFromCloud();
+        renderParentPage();
       } catch (err) {
         document.getElementById('parentSyncHint').textContent = err.message || 'Cloud pull failed.';
       }
@@ -201,8 +215,6 @@
       downloadProgressBackup();
     });
 
-    window.addEventListener('studyportal:sync-state', renderParentPage);
-    window.addEventListener('studyportal:data-changed', renderParentPage);
     renderParentPage();
   </script>
 </body>
