@@ -10,6 +10,8 @@
 
   const container = document.querySelector('main.container');
   const wisdomBanner = document.querySelector('.wisdom-banner');
+  const topTabs = document.querySelector('.top-tabs');
+  const sidebarNav = document.querySelector('.nav');
   if (!container || !wisdomBanner || typeof getChapterMetaRecord !== 'function') return;
 
   const parts = path.split('/').filter(Boolean);
@@ -160,6 +162,25 @@
     }).filter(Boolean).slice(0, 8);
   }
 
+  function getPrimaryContentAnchor() {
+    return Array.from(container.children).find(node => {
+      if (!node || !node.classList) return false;
+      if (node === wisdomBanner || node === topTabs || node === sidebarNav) return false;
+      if (node.classList.contains('chapter-sticky-progress')) return false;
+      if (node.classList.contains('chapter-enhancer-card')) return false;
+      return true;
+    }) || null;
+  }
+
+  function insertBeforeAnchor(node, anchor) {
+    if (!node) return;
+    if (anchor) {
+      container.insertBefore(node, anchor);
+      return;
+    }
+    container.appendChild(node);
+  }
+
   const quickCheckQuestions = [
     'I can explain the main idea of this page in my own words.',
     'I can solve or answer the key pattern without looking at the page.',
@@ -180,7 +201,7 @@
         '</div>' +
         '<div class="chapter-sticky-bar"><div class="chapter-sticky-fill" id="chapterStickyFill"></div></div>' +
       '</div>';
-      container.insertBefore(shell, wisdomBanner.nextElementSibling);
+      insertBeforeAnchor(shell, getPrimaryContentAnchor());
     }
 
     const fill = shell.querySelector('#chapterStickyFill');
@@ -296,12 +317,11 @@
       '</div>' +
       '<p class="footer-note" id="masteryCheckMessage"></p>';
 
-    const stickyShell = container.querySelector('.chapter-sticky-progress');
-    const insertAfter = stickyShell ? stickyShell.nextElementSibling : wisdomBanner.nextElementSibling;
-    container.insertBefore(overview, insertAfter);
-    container.insertBefore(memorize, overview.nextElementSibling);
-    container.insertBefore(tools, memorize.nextElementSibling);
-    container.insertBefore(quiz, tools.nextElementSibling);
+    const anchor = getPrimaryContentAnchor();
+    insertBeforeAnchor(overview, anchor);
+    insertBeforeAnchor(memorize, anchor);
+    insertBeforeAnchor(tools, anchor);
+    insertBeforeAnchor(quiz, anchor);
 
     if (meta.quiz && Array.isArray(meta.quiz.answers)) {
       meta.quiz.answers.forEach((value, index) => {
