@@ -66,6 +66,12 @@ a:hover { color: #22d3ee; }
   grid-column: 2;
 }
 
+/* Full-width structural rows should span both grid columns */
+.container > .wisdom-banner,
+.container > .top-tabs {
+  grid-column: 1 / -1;
+}
+
 /* ---- Header ---- */
 .header {
   position: relative;
@@ -295,15 +301,18 @@ a:hover { color: #22d3ee; }
 
 /* ---- Top Tabs (Dashboard / Schedule / Tracker) ---- */
 .top-tabs {
-  grid-column: 1 / -1;
   display: flex;
   gap: 10px;
   margin: 10px 0 4px;
+  position: relative;
   z-index: 2;
+  pointer-events: auto;
 }
 
 .top-tabs a {
   flex: 1;
+  position: relative;
+  z-index: 3;
   text-align: center;
   text-decoration: none;
   color: var(--text-muted);
@@ -333,7 +342,7 @@ a:hover { color: #22d3ee; }
 /* ---- Nav (sidebar) ---- */
 .nav {
   grid-column: 1;
-  grid-row: 2 / span 80;
+  grid-row: 3 / span 80;
   position: sticky;
   top: 12px;
   align-self: start;
