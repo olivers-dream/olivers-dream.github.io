@@ -181,6 +181,23 @@
     container.appendChild(node);
   }
 
+  function getSummaryAnchor() {
+    const summarySection = getSummarySection();
+    if (summarySection && summarySection.parentElement === container) return summarySection;
+    return getPrimaryContentAnchor();
+  }
+
+  function getAppendAnchor() {
+    const candidates = Array.from(container.children).filter(node => {
+      if (!node || !node.classList) return false;
+      if (node === wisdomBanner || node === topTabs || node === sidebarNav) return false;
+      if (node.classList.contains('chapter-sticky-progress')) return false;
+      if (node.classList.contains('chapter-enhancer-card')) return false;
+      return true;
+    });
+    return candidates.length ? (candidates[candidates.length - 1].nextSibling || null) : null;
+  }
+
   const quickCheckQuestions = [
     'I can explain the main idea of this page in my own words.',
     'I can solve or answer the key pattern without looking at the page.',
@@ -317,11 +334,11 @@
       '</div>' +
       '<p class="footer-note" id="masteryCheckMessage"></p>';
 
-    const anchor = getPrimaryContentAnchor();
-    insertBeforeAnchor(overview, anchor);
-    insertBeforeAnchor(memorize, anchor);
-    insertBeforeAnchor(tools, anchor);
-    insertBeforeAnchor(quiz, anchor);
+    const topAnchor = getSummaryAnchor();
+    insertBeforeAnchor(overview, topAnchor);
+    insertBeforeAnchor(memorize, topAnchor);
+    insertBeforeAnchor(tools, topAnchor);
+    insertBeforeAnchor(quiz, getAppendAnchor());
 
     if (meta.quiz && Array.isArray(meta.quiz.answers)) {
       meta.quiz.answers.forEach((value, index) => {
