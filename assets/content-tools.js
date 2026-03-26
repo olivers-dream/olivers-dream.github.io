@@ -10,6 +10,9 @@
       return '';
     }
   })();
+  const memoryBankVersionQuery = assetVersionQuery
+    ? assetVersionQuery + '&bank=20260327b'
+    : '?bank=20260327b';
 
   function runEnhancer() {
   const path = window.location.pathname || '';
@@ -255,18 +258,14 @@
     return 1400;
   }
 
-  function buildMindMapBlob(svg) {
+  function buildMindMapNode(svg, displayWidth) {
     const clone = svg.cloneNode(true);
     const viewBox = clone.getAttribute('viewBox');
     if (viewBox) {
       const parts = viewBox.trim().split(/\s+/).map(Number);
       if (parts.length === 4) {
-        if (!clone.getAttribute('width') || /%/.test(clone.getAttribute('width'))) {
-          clone.setAttribute('width', parts[2]);
-        }
-        if (!clone.getAttribute('height') || /auto|%/.test(clone.getAttribute('height'))) {
-          clone.setAttribute('height', parts[3]);
-        }
+        clone.setAttribute('width', parts[2]);
+        clone.setAttribute('height', parts[3]);
       }
     }
     if (!clone.getAttribute('xmlns')) {
@@ -275,11 +274,17 @@
     if (!clone.getAttribute('xmlns:xlink')) {
       clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
     }
+    clone.classList.add('mind-map-lightbox__svg');
+    clone.style.width = displayWidth + 'px';
+    clone.style.height = 'auto';
+    clone.style.maxWidth = 'none';
+    clone.style.display = 'block';
+    clone.style.margin = '0 auto';
+    return clone;
+  }
 
-    const source = new XMLSerializer().serializeToString(clone);
-    return new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n' + source], {
-      type: 'image/svg+xml;charset=utf-8'
-    });
+  function serializeMindMapSvg(svg, displayWidth) {
+    return new XMLSerializer().serializeToString(buildMindMapNode(svg, displayWidth));
   }
 
   function ensureMindMapLightbox() {
@@ -313,38 +318,27 @@
     const closeButton = lightbox.querySelector('#mindMapLightboxCloseBtn');
     const openTabButton = lightbox.querySelector('#mindMapLightboxOpenTab');
 
-    let currentObjectUrl = '';
+    let currentSvgMarkup = '';
     let lastFocused = null;
-
-    function clearObjectUrl() {
-      if (!currentObjectUrl) return;
-      URL.revokeObjectURL(currentObjectUrl);
-      currentObjectUrl = '';
-    }
 
     function closeLightbox() {
       lightbox.hidden = true;
       document.body.classList.remove('mind-map-lightbox-open');
       canvasNode.innerHTML = '';
-      clearObjectUrl();
+      currentSvgMarkup = '';
       if (lastFocused && typeof lastFocused.focus === 'function') {
         lastFocused.focus();
       }
     }
 
     function openLightbox(config) {
-      clearObjectUrl();
       lastFocused = document.activeElement;
 
-      const image = document.createElement('img');
-      image.className = 'mind-map-lightbox__image';
-      image.alt = config.altText || 'Enlarged mind map';
-      image.style.width = config.displayWidth + 'px';
-      currentObjectUrl = URL.createObjectURL(buildMindMapBlob(config.svg));
-      image.src = currentObjectUrl;
+      const svgNode = buildMindMapNode(config.svg, config.displayWidth);
+      currentSvgMarkup = serializeMindMapSvg(config.svg, config.displayWidth);
 
       canvasNode.innerHTML = '';
-      canvasNode.appendChild(image);
+      canvasNode.appendChild(svgNode);
       canvasNode.scrollTop = 0;
       canvasNode.scrollLeft = 0;
 
@@ -364,9 +358,18 @@
     });
 
     openTabButton.addEventListener('click', () => {
-      if (currentObjectUrl) {
-        window.open(currentObjectUrl, '_blank', 'noopener');
-      }
+      if (!currentSvgMarkup) return;
+      const popup = window.open('', '_blank');
+      if (!popup) return;
+      popup.opener = null;
+      popup.document.write(
+        '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>' +
+        escapeHtml(pageTitle) +
+        ' Mind Map</title><style>body{margin:0;padding:24px;background:#020617;color:#e2e8f0;font-family:Inter,Segoe UI,Arial,sans-serif;display:flex;justify-content:center}svg{max-width:none;height:auto}</style></head><body>' +
+        currentSvgMarkup +
+        '</body></html>'
+      );
+      popup.document.close();
     });
 
     document.addEventListener('keydown', event => {
@@ -398,16 +401,14 @@
 
       wrap.dataset.zoomReady = 'true';
       wrap.classList.add('is-zoomable');
-      wrap.setAttribute('role', 'button');
-      wrap.setAttribute('tabindex', '0');
-      wrap.setAttribute('aria-label', 'Open enlarged mind map for ' + pageTitle);
 
-      if (!wrap.querySelector('.mind-map-zoom-pill')) {
-        const zoomPill = document.createElement('span');
+      let zoomPill = wrap.querySelector('.mind-map-zoom-pill');
+      if (!zoomPill) {
+        zoomPill = document.createElement('button');
+        zoomPill.type = 'button';
         zoomPill.className = 'mind-map-zoom-pill';
-        zoomPill.setAttribute('aria-hidden', 'true');
-        zoomPill.textContent = 'Click to enlarge';
-        wrap.appendChild(zoomPill);
+        zoomPill.textContent = 'Enlarge mind map';
+        wrap.insertBefore(zoomPill, wrap.firstChild);
       }
 
       const openViewer = () => {
@@ -421,16 +422,10 @@
         });
       };
 
-      wrap.addEventListener('click', event => {
-        if (event.target.closest('button, a, input, textarea, select, label')) return;
+      zoomPill.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
         openViewer();
-      });
-
-      wrap.addEventListener('keydown', event => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          openViewer();
-        }
       });
     });
   }
@@ -656,7 +651,7 @@
   }
 
   const memoryBankScript = document.createElement('script');
-  memoryBankScript.src = assetBase + 'chapter-memory-bank.js' + assetVersionQuery;
+  memoryBankScript.src = assetBase + 'chapter-memory-bank.js' + memoryBankVersionQuery;
   memoryBankScript.onload = runEnhancer;
   memoryBankScript.onerror = runEnhancer;
   document.head.appendChild(memoryBankScript);
