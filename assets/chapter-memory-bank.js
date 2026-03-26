@@ -1,4 +1,4 @@
-window.STUDY_PORTAL_MEMORY_BANK = {
+const STUDY_PORTAL_MEMORY_BANK = {
   'maths/chapter-01-real-numbers.html': {
     summary: 'Use Euclid, prime factorisation, and decimal-expansion rules to reason about HCF, LCM, and rational numbers.',
     memorize: [
@@ -720,3 +720,11 @@ window.STUDY_PORTAL_MEMORY_BANK = {
     ]
   }
 };
+
+if (typeof window !== 'undefined') {
+  window.STUDY_PORTAL_MEMORY_BANK = STUDY_PORTAL_MEMORY_BANK;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = STUDY_PORTAL_MEMORY_BANK;
+}

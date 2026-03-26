@@ -640,6 +640,10 @@ a:hover { color: #22d3ee; }
   line-height: 1.55;
 }
 
+.parent-summary-box {
+  white-space: pre-wrap;
+}
+
 /* ---- Form Elements ---- */
 input, select, textarea {
   width: 100%;
@@ -944,6 +948,23 @@ tr.today-row td {
   resize: vertical;
 }
 
+.chapter-watchout-box {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(245,158,11,0.24);
+  background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(239,68,68,0.08));
+}
+
+.chapter-watchout-box h4 {
+  margin-bottom: 8px;
+  color: #f8fafc;
+}
+
+.portal-search-filters select {
+  width: 100%;
+}
+
 .portal-search-card input[type="search"] {
   font-size: 1rem;
 }
@@ -959,6 +980,17 @@ tr.today-row td {
   border-radius: 16px;
   padding: 14px 16px;
   background: rgba(255,255,255,0.03);
+}
+
+.search-result-weak {
+  margin-top: 10px;
+  color: #fbbf24;
+}
+
+.search-result-path {
+  margin-top: 6px;
+  font-size: 0.74rem;
+  opacity: 0.8;
 }
 
 .search-result-top {

@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const memoryBank = require(path.join(__dirname, '..', 'assets', 'chapter-memory-bank.js'));
 
 const ROOT = path.resolve(__dirname, '..');
 const OUTPUT = path.join(ROOT, 'assets', 'search-index.js');
@@ -63,6 +64,25 @@ function getTypeLabel(fileName) {
   return 'Chapter';
 }
 
+function extractSectionByHeading(content, headingPattern) {
+  const sections = content.match(/<section\b[\s\S]*?<\/section>/gi) || [];
+  return sections.find(section => {
+    const heading = extractMatches(section, '<h3[^>]*>([\\s\\S]*?)<\\/h3>', 1)[0] || '';
+    return headingPattern.test(heading);
+  }) || '';
+}
+
+function uniqueItems(items, limit) {
+  const output = [];
+  (items || []).forEach(item => {
+    const normalized = stripTags(item);
+    if (!normalized) return;
+    if (output.includes(normalized)) return;
+    output.push(normalized);
+  });
+  return output.slice(0, limit);
+}
+
 function extractMatches(content, expression, limit) {
   const items = [];
   let match;
@@ -78,18 +98,50 @@ function buildEntry(relativePath) {
   const absolute = path.join(ROOT, relativePath);
   const content = fs.readFileSync(absolute, 'utf8');
   const fileName = path.basename(relativePath);
+  const normalizedPath = relativePath.split(path.sep).join('/');
+  const curated = memoryBank[normalizedPath] || {};
   const h1 = extractMatches(content, '<h1[^>]*>([\\s\\S]*?)<\\/h1>', 1)[0];
   const title = h1 || stripTags((content.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || fileName);
   const headings = extractMatches(content, '<h3[^>]*>([\\s\\S]*?)<\\/h3>', 5);
   const paragraphs = extractMatches(content, '<p[^>]*>([\\s\\S]*?)<\\/p>', 3);
+  const summarySection = extractSectionByHeading(content, /summary|context|breakdown|easy language/i);
+  const commonMistakesSection = extractSectionByHeading(content, /common mistakes/i);
+  const rememberSection = extractSectionByHeading(content, /must|remember|boxed|key dates|key facts|articles/i);
+  const learningBullets = uniqueItems([
+    ...(Array.isArray(curated.learn) ? curated.learn : []),
+    ...extractMatches(summarySection, '<li[^>]*>([\\s\\S]*?)<\\/li>', 4)
+  ], 4);
+  const memorizeItems = uniqueItems([
+    ...(Array.isArray(curated.memorize) ? curated.memorize : []),
+    ...extractMatches(rememberSection, '<li[^>]*>([\\s\\S]*?)<\\/li>', 5)
+  ], 6);
+  const weakSpots = uniqueItems([
+    ...(Array.isArray(curated.weakSpots) ? curated.weakSpots : []),
+    ...extractMatches(commonMistakesSection, '<li[^>]*>([\\s\\S]*?)<\\/li>', 5)
+  ], 5);
+  const curatedSummary = stripTags(curated.summary || '');
   return {
     title,
     subject: getSubjectLabel(relativePath),
     type: getTypeLabel(fileName),
-    path: relativePath.split(path.sep).join('/'),
-    relativePath: relativePath.split(path.sep).join('/'),
+    path: normalizedPath,
+    relativePath: normalizedPath,
     keywords: headings.join(' | '),
-    snippet: paragraphs.find(Boolean) || headings[0] || title
+    snippet: curatedSummary || paragraphs.find(Boolean) || headings[0] || title,
+    learn: learningBullets,
+    memorize: memorizeItems,
+    weakSpots,
+    searchText: uniqueItems([
+      title,
+      getSubjectLabel(relativePath),
+      getTypeLabel(fileName),
+      headings.join(' | '),
+      curatedSummary,
+      learningBullets.join(' | '),
+      memorizeItems.join(' | '),
+      weakSpots.join(' | '),
+      paragraphs.join(' | ')
+    ], 30).join(' | ')
   };
 }
 

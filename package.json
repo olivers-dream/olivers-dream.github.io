@@ -3,6 +3,9 @@
   "private": true,
   "scripts": {
     "build:search-index": "node tools/build-search-index.js",
+    "normalize:content-shells": "node tools/normalize-content-shells.js",
+    "stamp:assets": "node tools/stamp-assets.js",
+    "build:site": "npm run build:search-index && npm run normalize:content-shells && npm run stamp:assets",
     "validate:site": "node tools/validate-site.js",
     "test:e2e": "playwright test"
   },

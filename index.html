@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Oliver's Dream</title>
-  <link rel="stylesheet" href="assets/styles.css" />
+  <link rel="stylesheet" href="assets/styles.css?v=cc3d4caae7" />
 </head>
 <body>
 
@@ -195,7 +195,45 @@
           <input type="search" id="portalSearchInput" placeholder="Try: triangles, anne frank, nationalism, worksheet"/>
         </div>
       </div>
-      <p class="footer-note" id="portalSearchMeta">Type at least 2 letters to search across chapters, units, and worksheets.</p>
+      <div class="form-row portal-search-filters" style="margin-top:12px;">
+        <div>
+          <label for="portalSearchSubjectFilter">Subject</label>
+          <select id="portalSearchSubjectFilter">
+            <option value="all">All subjects</option>
+            <option value="Maths">Maths</option>
+            <option value="Science">Science</option>
+            <option value="Geography">Geography</option>
+            <option value="Civics">Civics</option>
+            <option value="History">History</option>
+            <option value="Economics">Economics</option>
+            <option value="First Flight">First Flight</option>
+            <option value="Footprints">Footprints</option>
+            <option value="Words &amp; Expressions">Words &amp; Expressions</option>
+            <option value="Maths Worksheets">Maths Worksheets</option>
+          </select>
+        </div>
+        <div>
+          <label for="portalSearchTypeFilter">Page type</label>
+          <select id="portalSearchTypeFilter">
+            <option value="all">All types</option>
+            <option value="Chapter">Chapter</option>
+            <option value="Unit">Unit</option>
+            <option value="Worksheet">Worksheet</option>
+          </select>
+        </div>
+        <div>
+          <label for="portalSearchStatusFilter">Progress filter</label>
+          <select id="portalSearchStatusFilter">
+            <option value="all">All topics</option>
+            <option value="flagged">Flagged weak topics</option>
+            <option value="need_revision">Need revision</option>
+            <option value="confusing">Confusing</option>
+            <option value="in_progress">In progress</option>
+            <option value="mastered">Mastered</option>
+          </select>
+        </div>
+      </div>
+      <p class="footer-note" id="portalSearchMeta">Type at least 2 letters to search across chapters, units, worksheets, and weak topics.</p>
       <div class="portal-search-results" id="portalSearchResults">
         <div class="status-box">Search results will appear here.</div>
       </div>
@@ -385,9 +423,9 @@
 
   </main>
 
-  <script src="assets/search-index.js"></script>
-  <script src="assets/search-tools.js"></script>
-  <script src="assets/app.js"></script>
+  <script src="assets/app.js?v=d549f7c373"></script>
+  <script src="assets/search-index.js?v=b3661bc1fb"></script>
+  <script src="assets/search-tools.js?v=e35f5c785e"></script>
   <script>
     // ═══════════════════════════════════════════════════════════
     // EXISTING STATE LOGIC — unchanged calls into app.js

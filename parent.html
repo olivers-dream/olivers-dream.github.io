@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>👨‍👦 Parent View — Oliver's Dream</title>
-  <link rel="stylesheet" href="assets/styles.css"/>
+  <link rel="stylesheet" href="assets/styles.css?v=cc3d4caae7"/>
 </head>
 <body>
   <nav class="bottom-nav" aria-label="Mobile navigation">
@@ -190,6 +190,18 @@
       </section>
 
       <section class="card">
+        <h3>Weekly Parent Summary</h3>
+        <p class="footer-note">Use this as a ready-to-send weekly update. You can copy it directly or open it in your email app as a draft.</p>
+        <div class="status-box parent-summary-box" id="parentEmailSummary">Weekly summary will appear here.</div>
+        <div class="action-row" style="margin-top:12px;">
+          <button class="btn secondary" id="copyParentSummaryBtn">Copy Summary</button>
+          <button class="btn secondary" id="emailParentSummaryBtn">Open Email Draft</button>
+          <button class="btn secondary" id="refreshParentSummaryBtn">Refresh Summary</button>
+        </div>
+        <p class="footer-note" id="parentEmailSummaryNote"></p>
+      </section>
+
+      <section class="card">
         <h3>Subject Progress</h3>
         <div class="grid" id="subjectGrid"></div>
       </section>
@@ -221,7 +233,7 @@
   <script>
     window.STUDY_PORTAL_DISABLE_AUTO_CLOUD_INIT = true;
   </script>
-  <script src="assets/app.js"></script>
+  <script src="assets/app.js?v=d549f7c373"></script>
   <script>
     const SUBJECTS = [
       { key: 'math', prefix: 'math', total: 14, label: 'Maths', icon: '📐' },
@@ -508,11 +520,97 @@
       setTimeout(() => URL.revokeObjectURL(link.href), 1000);
     }
 
+    function buildParentDigest(snapshot) {
+      const currentWeekPlan = getCurrentWeekPlan(snapshot.parentGoals);
+      const weeklySeries = buildWeeklySeries(snapshot.dailyLog || [], 8);
+      const currentWeek = weeklySeries[weeklySeries.length - 1] || { hours: 0 };
+      const previousWeek = weeklySeries[weeklySeries.length - 2] || { hours: 0 };
+      const focusMinutes = (snapshot.focusSessions || [])
+        .filter(session => getMondayKey(session.date) === currentWeekPlan.weekKey)
+        .reduce((sum, session) => sum + Number(session.minutes || 0), 0);
+      const subjectLeaders = getStrongestAndWeakestSubjects(snapshot);
+      const latest = (snapshot.dailyLog || [])[0];
+      const range = getWeekRangeForKey(currentWeekPlan.weekKey);
+      const chapterTouches = Object.keys(snapshot.chapterMeta || {})
+        .filter(key => {
+          const updatedAt = Number(((snapshot.chapterMeta || {})[key] || {}).updatedAt || 0);
+          return updatedAt >= range.startMs && updatedAt < range.endMs;
+        }).length;
+      const flaggedItems = Object.keys(snapshot.chapterMeta || {})
+        .map(key => ({
+          key,
+          label: chapterLabelFromKey(key),
+          status: ((snapshot.chapterMeta || {})[key] || {}).status || '',
+          quizPercent: Number((((snapshot.chapterMeta || {})[key] || {}).quiz || {}).percent || 0),
+          updatedAt: Number((((snapshot.chapterMeta || {})[key] || {}).updatedAt || 0))
+        }))
+        .filter(item => item.status === 'need_revision' || item.status === 'confusing' || (item.quizPercent > 0 && item.quizPercent < 60))
+        .sort((left, right) => right.updatedAt - left.updatedAt)
+        .slice(0, 3);
+
+      const priorities = [];
+      if (currentWeekPlan.hoursTarget > 0 && currentWeek.hours < currentWeekPlan.hoursTarget) {
+        priorities.push('Add ' + (currentWeekPlan.hoursTarget - currentWeek.hours).toFixed(1) + ' more study hours this week.');
+      }
+      if (currentWeekPlan.chaptersTarget > 0 && chapterTouches < currentWeekPlan.chaptersTarget) {
+        priorities.push('Touch ' + (currentWeekPlan.chaptersTarget - chapterTouches) + ' more chapters before the week closes.');
+      }
+      if (subjectLeaders.weakest) {
+        priorities.push('Prioritise ' + subjectLeaders.weakest.subject.label + ' next because it has the highest attention risk.');
+      }
+      if (flaggedItems.length) {
+        priorities.push('Review flagged topics: ' + flaggedItems.map(item => item.label).join(', ') + '.');
+      }
+      if (!priorities.length) {
+        priorities.push('Maintain the current pace and keep daily revision consistent.');
+      }
+
+      const text = [
+        'Weekly study summary',
+        'Week starting: ' + friendlyDate(currentWeekPlan.weekKey),
+        'Hours this week: ' + currentWeek.hours.toFixed(1) + (currentWeekPlan.hoursTarget > 0 ? (' / ' + currentWeekPlan.hoursTarget + ' target') : ''),
+        'Chapters touched: ' + chapterTouches + (currentWeekPlan.chaptersTarget > 0 ? (' / ' + currentWeekPlan.chaptersTarget + ' target') : ''),
+        'Focus time: ' + focusMinutes + ' minutes',
+        'Trend vs last week: ' + ((currentWeek.hours - previousWeek.hours) >= 0 ? '+' : '') + (currentWeek.hours - previousWeek.hours).toFixed(1) + ' hrs',
+        'Strongest subject: ' + (subjectLeaders.strongest ? subjectLeaders.strongest.subject.label : 'Not enough data yet'),
+        'Needs attention: ' + (subjectLeaders.weakest ? subjectLeaders.weakest.subject.label : 'No major weak area right now'),
+        'Latest study day: ' + (latest ? (friendlyDate(latest.date) + ' · ' + latest.subject + ' · ' + latest.hours + ' hrs') : 'No activity recorded yet'),
+        currentWeekPlan.remark ? ('Parent remark: ' + currentWeekPlan.remark) : 'Parent remark: —',
+        'Priority actions: ' + priorities.join(' '),
+        flaggedItems.length ? ('Flagged topics: ' + flaggedItems.map(item => item.label + (item.quizPercent ? (' (' + item.quizPercent + '% quiz)') : '')).join(', ')) : 'Flagged topics: none'
+      ].join('\n');
+
+      return {
+        text,
+        priorities,
+        flaggedItems
+      };
+    }
+
+    function renderParentSummary(snapshot) {
+      const digest = buildParentDigest(snapshot);
+      document.getElementById('parentEmailSummary').textContent = digest.text;
+      document.getElementById('parentEmailSummaryNote').textContent =
+        'Copy this summary as-is or open it as a draft email for weekly updates.';
+    }
+
+    async function copyParentSummaryToClipboard(snapshot) {
+      const digest = buildParentDigest(snapshot);
+      await navigator.clipboard.writeText(digest.text);
+    }
+
+    function openParentSummaryEmail(snapshot) {
+      const digest = buildParentDigest(snapshot);
+      const subject = 'Oliver\'s Dream Weekly Study Summary';
+      window.location.href = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(digest.text);
+    }
+
     function exportParentCsvReport(snapshot) {
       const currentWeekPlan = getCurrentWeekPlan(snapshot.parentGoals);
       const weeklySeries = buildWeeklySeries(snapshot.dailyLog || [], 8);
       const currentWeek = weeklySeries[weeklySeries.length - 1] || { hours: 0 };
       const focusMinutes = (snapshot.focusSessions || []).reduce((sum, item) => sum + Number(item.minutes || 0), 0);
+      const digest = buildParentDigest(snapshot);
       const subjectRows = SUBJECTS.map(subject => {
         const stats = getSubjectStatsFromSnapshot(snapshot, subject);
         return [subject.label, stats.done, stats.total, stats.percent + '%', stats.hours.toFixed(1), stats.averageQuiz + '%', stats.attentionCount];
@@ -532,6 +630,7 @@
         ['Weekly Plan', 'Inactivity Alert Days', currentWeekPlan.inactivityThresholdDays],
         ['Weekly Plan', 'Remark', currentWeekPlan.remark || ''],
         ['Weekly Progress', 'Current Week Hours', currentWeek.hours.toFixed(1)],
+        ['Weekly Progress', 'Digest', digest.text],
         ['Subject', 'Completed', 'Total', 'Percent', 'Hours', 'Average Quiz', 'Flagged Chapters'],
         ...subjectRows,
         ['Recent Log', 'Date', 'Subject', 'Hours', 'Notes', 'Time']
@@ -552,6 +651,7 @@
     function printParentPdfReport(snapshot) {
       const currentWeekPlan = getCurrentWeekPlan(snapshot.parentGoals);
       const focusMinutes = (snapshot.focusSessions || []).reduce((sum, item) => sum + Number(item.minutes || 0), 0);
+      const digest = buildParentDigest(snapshot);
       const subjectCards = SUBJECTS.map(subject => {
         const stats = getSubjectStatsFromSnapshot(snapshot, subject);
         return '<tr><td>' + subject.label + '</td><td>' + stats.done + ' / ' + stats.total + '</td><td>' + stats.percent + '%</td><td>' + stats.hours.toFixed(1) + '</td><td>' + stats.averageQuiz + '%</td><td>' + stats.attentionCount + '</td></tr>';
@@ -578,6 +678,7 @@
           '<div class="panel"><strong>Current Week Goal</strong><p>Hours target: ' + currentWeekPlan.hoursTarget + '</p><p>Chapter target: ' + currentWeekPlan.chaptersTarget + '</p><p>Remark: ' + (currentWeekPlan.remark || '—') + '</p></div>' +
           '<div class="panel"><strong>Overall Progress</strong><p>XP: ' + (snapshot.xp || 0) + '</p><p>Streak: ' + (snapshot.streak || 0) + ' days</p><p>Total study entries: ' + (snapshot.dailyLog || []).length + '</p><p>Focused minutes: ' + focusMinutes + '</p></div>' +
         '</div>' +
+        '<div class="panel"><strong>Weekly Parent Summary</strong><p>' + digest.text.replace(/\n/g, '<br>') + '</p></div>' +
         '<h2>Subject Overview</h2>' +
         '<table><thead><tr><th>Subject</th><th>Progress</th><th>Percent</th><th>Hours</th><th>Quiz Avg</th><th>Flags</th></tr></thead><tbody>' + subjectCards + '</tbody></table>' +
         '<h2 style="margin-top:22px;">Recent Study Log</h2>' +
@@ -877,6 +978,7 @@
       renderSubjectHeatmap(snapshot);
       renderParentPlan(snapshot);
       renderGoalAlerts(snapshot);
+      renderParentSummary(snapshot);
       renderSubjectGrid(snapshot);
       renderAttentionBoard(snapshot);
       renderRecentLog(snapshot);
@@ -1118,6 +1220,29 @@
       } catch (err) {
         showParentAuthMessage(err.message || 'Could not open the PDF report.');
       }
+    });
+
+    document.getElementById('copyParentSummaryBtn').addEventListener('click', async () => {
+      try {
+        await copyParentSummaryToClipboard(getSnapshot());
+        showParentAuthMessage('Weekly summary copied to clipboard.');
+      } catch (err) {
+        showParentAuthMessage(err.message || 'Could not copy the weekly summary.');
+      }
+    });
+
+    document.getElementById('emailParentSummaryBtn').addEventListener('click', () => {
+      try {
+        openParentSummaryEmail(getSnapshot());
+        showParentAuthMessage('Email draft opened.');
+      } catch (err) {
+        showParentAuthMessage(err.message || 'Could not open the email draft.');
+      }
+    });
+
+    document.getElementById('refreshParentSummaryBtn').addEventListener('click', () => {
+      renderParentPage();
+      showParentAuthMessage('Weekly summary refreshed.');
     });
 
     document.getElementById('parentLockBtn').addEventListener('click', () => {

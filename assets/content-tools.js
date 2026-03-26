@@ -1,6 +1,15 @@
 (function chapterEnhancerBootstrap() {
   const currentScript = document.currentScript;
   const assetBase = currentScript && currentScript.src ? new URL('.', currentScript.src).href : '';
+  const assetVersionQuery = (() => {
+    if (!currentScript || !currentScript.src) return '';
+    try {
+      const url = new URL(currentScript.src);
+      return url.search || '';
+    } catch (err) {
+      return '';
+    }
+  })();
 
   function runEnhancer() {
   const path = window.location.pathname || '';
@@ -148,6 +157,37 @@
     return cleaned.slice(0, 5);
   }
 
+  function collectWeakSpotItems() {
+    if (Array.isArray(curatedEntry.weakSpots) && curatedEntry.weakSpots.length) {
+      return curatedEntry.weakSpots.slice(0, 4);
+    }
+
+    const candidates = [];
+
+    Array.from(container.querySelectorAll('section.card')).forEach(section => {
+      const heading = ((section.querySelector('h3') || {}).textContent || '').trim();
+      if (!/common mistakes|watch out|avoid|exam trap/i.test(heading)) return;
+      Array.from(section.querySelectorAll('li')).slice(0, 5).forEach(item => {
+        const text = item.textContent.trim();
+        if (text) candidates.push(text);
+      });
+      Array.from(section.querySelectorAll('p')).slice(0, 2).forEach(item => {
+        const text = item.textContent.trim();
+        if (text) candidates.push(text);
+      });
+    });
+
+    const cleaned = [];
+    candidates.forEach(item => {
+      const normalized = item.replace(/\s+/g, ' ').trim();
+      if (!normalized) return;
+      if (cleaned.includes(normalized)) return;
+      cleaned.push(normalized);
+    });
+
+    return cleaned.slice(0, 4);
+  }
+
   function ensureSectionIds() {
     const sections = Array.from(container.querySelectorAll('section.card'));
     return sections.map((section, index) => {
@@ -251,6 +291,7 @@
     const learningBullets = collectLearningBullets();
     const revisionSummary = getRevisionSummary();
     const mustMemorizeItems = collectMustMemorizeItems(learningBullets);
+    const weakSpotItems = collectWeakSpotItems();
     const memoryNote = String(meta.notes || '');
 
     document.querySelectorAll('.chapter-enhancer-card').forEach(node => node.remove());
@@ -310,6 +351,14 @@
         '<button class="flag-chip' + (currentStatus === 'confusing' ? ' active' : '') + '" data-status="confusing">Confusing</button>' +
         '<button class="flag-chip' + (currentStatus === 'mastered' ? ' active' : '') + '" data-status="mastered">Mastered</button>' +
       '</div>' +
+      (weakSpotItems.length
+        ? (
+          '<div class="chapter-watchout-box">' +
+            '<h4>Watch Out For</h4>' +
+            '<ul class="list">' + weakSpotItems.map(item => '<li>' + escapeHtml(item) + '</li>').join('') + '</ul>' +
+          '</div>'
+        )
+        : '') +
       '<div class="footer-note">Status syncs with the same cloud record. It does not reset existing chapter progress.</div>';
 
     const quiz = document.createElement('section');
@@ -409,7 +458,7 @@
   }
 
   const memoryBankScript = document.createElement('script');
-  memoryBankScript.src = assetBase + 'chapter-memory-bank.js';
+  memoryBankScript.src = assetBase + 'chapter-memory-bank.js' + assetVersionQuery;
   memoryBankScript.onload = runEnhancer;
   memoryBankScript.onerror = runEnhancer;
   document.head.appendChild(memoryBankScript);

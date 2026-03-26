@@ -13,6 +13,22 @@ test('dashboard search finds core study pages', async ({ page }) => {
   await expect(page.locator('#portalSearchResults')).toContainText('Triangles');
 });
 
+test('dashboard search can filter flagged weak topics without a text query', async ({ page }) => {
+  await page.goto('/index.html');
+  await page.evaluate(() => {
+    localStorage.setItem('study_portal_chapter_meta_v1', JSON.stringify({
+      'history/chapter-01-rise-of-nationalism-europe.html': {
+        status: 'need_revision',
+        updatedAt: Date.now()
+      }
+    }));
+  });
+  await page.selectOption('#portalSearchStatusFilter', 'flagged');
+
+  await expect(page.locator('#portalSearchResults')).toContainText('The Rise of Nationalism in Europe');
+  await expect(page.locator('#portalSearchResults')).toContainText('need revision');
+});
+
 test('tracker saves a study log entry and shows focus timer controls', async ({ page }) => {
   await page.goto('/tracker.html');
   await page.fill('#logHours', '2');
