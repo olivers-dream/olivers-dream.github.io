@@ -624,6 +624,9 @@ async function initializeCloudSync() {
 
       syncState.auth = window.firebase.auth(app);
       syncState.db = window.firebase.firestore(app);
+      syncState.db.settings({
+        experimentalForceLongPolling: true
+      });
 
       await syncState.auth.setPersistence(window.firebase.auth.Auth.Persistence.LOCAL);
       syncState.auth.onAuthStateChanged(user => {
