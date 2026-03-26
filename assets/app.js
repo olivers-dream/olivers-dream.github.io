@@ -376,15 +376,18 @@ function getCurrentDeviceLabel() {
 
 function installStorageSyncHooks() {
   Storage.prototype.setItem = function patchedSetItem(key, value) {
+    const nextValue = String(value);
+    const previousValue = storageBridge.getItem.call(this, key);
     storageBridge.setItem.call(this, key, value);
-    if (this === localStorage && !syncState.suppressTracking && isSyncableStorageKey(key)) {
+    if (this === localStorage && !syncState.suppressTracking && isSyncableStorageKey(key) && previousValue !== nextValue) {
       touchLocalState(`set:${key}`);
     }
   };
 
   Storage.prototype.removeItem = function patchedRemoveItem(key) {
+    const hadValue = storageBridge.getItem.call(this, key) !== null;
     storageBridge.removeItem.call(this, key);
-    if (this === localStorage && !syncState.suppressTracking && isSyncableStorageKey(key)) {
+    if (this === localStorage && !syncState.suppressTracking && isSyncableStorageKey(key) && hadValue) {
       touchLocalState(`remove:${key}`);
     }
   };
@@ -1067,7 +1070,9 @@ function getXPData() {
 
   const previousLevel = localStorage.getItem(STORAGE_KEYS.prevLevel) || 'Beginner';
   const justLeveledUp = level !== previousLevel;
-  localStorage.setItem(STORAGE_KEYS.prevLevel, level);
+  if (justLeveledUp) {
+    localStorage.setItem(STORAGE_KEYS.prevLevel, level);
+  }
 
   return { xp, streak, level, xpProgress, justLeveledUp };
 }
