@@ -25,6 +25,10 @@ const APP_ASSET_BASE = (() => {
   if (script && script.src) return new URL('.', script.src).href;
   return new URL('./', window.location.href).href;
 })();
+const CLOUD_CONFIG_ASSET_URL = (() => {
+  const version = window.STUDY_PORTAL_CONFIG_VERSION || Date.now();
+  return `${APP_ASSET_BASE}cloud-config.js?v=${encodeURIComponent(String(version))}`;
+})();
 
 const storageBridge = {
   setItem: Storage.prototype.setItem,
@@ -429,7 +433,7 @@ async function loadCloudConfig() {
   if (window.STUDY_PORTAL_CLOUD_CONFIG) return window.STUDY_PORTAL_CLOUD_CONFIG;
 
   try {
-    await loadExternalScript(`${APP_ASSET_BASE}cloud-config.js`);
+    await loadExternalScript(CLOUD_CONFIG_ASSET_URL);
   } catch (err) {
     return null;
   }

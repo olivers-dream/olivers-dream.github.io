@@ -111,7 +111,10 @@
     </div>
   </main>
 
-  <script src="assets/cloud-config.js"></script>
+  <script>
+    window.STUDY_PORTAL_CONFIG_VERSION = Date.now();
+    document.write('<script src="assets/cloud-config.js?v=' + window.STUDY_PORTAL_CONFIG_VERSION + '"><' + '/script>');
+  </script>
   <script>
     window.STUDY_PORTAL_DISABLE_AUTO_CLOUD_INIT = true;
   </script>
@@ -259,6 +262,13 @@
       sessionStorage.setItem(PARENT_UNLOCK_KEY, 'yes');
       document.getElementById('parentLockMessage').textContent = '';
       showParentAccess();
+    });
+
+    document.getElementById('parentPinInput').addEventListener('keydown', event => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        document.getElementById('parentUnlockBtn').click();
+      }
     });
 
     document.getElementById('parentPullBtn').addEventListener('click', async () => {
