@@ -8,5 +8,5 @@ window.STUDY_PORTAL_CLOUD_CONFIG = {
     appId: "1:523750490645:web:2ff477b7cf58fceac4041c",
   },
   collectionName: 'studyPortalProfiles',
-  parentAccessPin: '7482'
+  parentAccessPin: '888888'
 };
