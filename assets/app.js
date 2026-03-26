@@ -36,10 +36,7 @@ const storageBridge = {
 const syncState = {
   bootstrapPromise: null,
   auth: null,
-  db: null,
   user: null,
-  docRef: null,
-  unsubscribeDoc: null,
   config: null,
   status: 'local-only',
   message: 'Running in browser-only mode.',
@@ -49,6 +46,7 @@ const syncState = {
   lastCloudUpdatedAt: 0,
   saveTimer: null,
   saveInFlight: null,
+  pollTimer: null,
   scriptCache: {},
   suppressTracking: false
 };
@@ -438,39 +436,140 @@ async function loadCloudConfig() {
 async function loadFirebaseCompat() {
   await loadExternalScript(`https://www.gstatic.com/firebasejs/${FIREBASE_COMPAT_VERSION}/firebase-app-compat.js`);
   await loadExternalScript(`https://www.gstatic.com/firebasejs/${FIREBASE_COMPAT_VERSION}/firebase-auth-compat.js`);
-  await loadExternalScript(`https://www.gstatic.com/firebasejs/${FIREBASE_COMPAT_VERSION}/firebase-firestore-compat.js`);
+}
+
+function getCloudCollectionName() {
+  return (syncState.config && syncState.config.collectionName) || 'studyPortalProfiles';
+}
+
+function getCloudDocumentUrl() {
+  if (!syncState.config || !syncState.config.firebase || !syncState.config.firebase.projectId || !syncState.user) {
+    throw new Error('Sign in on the Sync page before using cloud sync.');
+  }
+  const projectId = syncState.config.firebase.projectId;
+  const path = `${encodeURIComponent(getCloudCollectionName())}/${encodeURIComponent(syncState.user.uid)}`;
+  return `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${path}`;
+}
+
+async function getCloudAuthToken(forceRefresh) {
+  if (!syncState.user) throw new Error('Sign in on the Sync page before using cloud sync.');
+  return syncState.user.getIdToken(!!forceRefresh);
+}
+
+function decodeFirestoreValue(value) {
+  if (!value || typeof value !== 'object') return null;
+  if (Object.prototype.hasOwnProperty.call(value, 'stringValue')) return value.stringValue;
+  if (Object.prototype.hasOwnProperty.call(value, 'integerValue')) return Number(value.integerValue || 0);
+  if (Object.prototype.hasOwnProperty.call(value, 'doubleValue')) return Number(value.doubleValue || 0);
+  if (Object.prototype.hasOwnProperty.call(value, 'booleanValue')) return !!value.booleanValue;
+  if (value.nullValue != null) return null;
+  if (value.mapValue && value.mapValue.fields) {
+    const mapped = {};
+    Object.keys(value.mapValue.fields).forEach(key => {
+      mapped[key] = decodeFirestoreValue(value.mapValue.fields[key]);
+    });
+    return mapped;
+  }
+  return null;
 }
 
 function extractRemoteStorageMap(docData) {
   if (!docData || typeof docData !== 'object') return {};
   if (docData.storage && typeof docData.storage === 'object') return docData.storage;
+
+  const fields = docData.fields || {};
+  if (fields.storageJson && typeof fields.storageJson.stringValue === 'string') {
+    return safeParseJSON(fields.storageJson.stringValue, {});
+  }
+  if (fields.storage) {
+    const decoded = decodeFirestoreValue(fields.storage);
+    return decoded && typeof decoded === 'object' ? decoded : {};
+  }
   return {};
 }
 
+function extractRemoteUpdatedAtMs(docData) {
+  if (!docData || typeof docData !== 'object') return 0;
+  if (docData.updatedAtMs != null) return Number(docData.updatedAtMs || 0);
+  const fields = docData.fields || {};
+  if (fields.updatedAtMs && fields.updatedAtMs.integerValue != null) {
+    return Number(fields.updatedAtMs.integerValue || 0);
+  }
+  return 0;
+}
+
+async function fetchCloudDocument() {
+  const response = await fetch(getCloudDocumentUrl(), {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${await getCloudAuthToken()}`
+    }
+  });
+
+  if (response.status === 404) return null;
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Cloud read failed (${response.status}): ${text.slice(0, 180)}`);
+  }
+
+  return response.json();
+}
+
+function buildCloudPatchUrl() {
+  const url = new URL(getCloudDocumentUrl());
+  ['storageJson', 'version', 'updatedAtMs', 'updatedBy', 'updatedByEmail', 'reason'].forEach(field => {
+    url.searchParams.append('updateMask.fieldPaths', field);
+  });
+  return url.toString();
+}
+
+function createCloudDocumentBody(storageMap, reason) {
+  const updatedAtMs = Date.now();
+  return {
+    updatedAtMs,
+    body: {
+      fields: {
+        storageJson: { stringValue: JSON.stringify(storageMap) },
+        version: { integerValue: '1' },
+        updatedAtMs: { integerValue: String(updatedAtMs) },
+        updatedBy: { stringValue: getCurrentDeviceLabel() },
+        updatedByEmail: { stringValue: syncState.user ? (syncState.user.email || '') : '' },
+        reason: { stringValue: reason || 'sync' }
+      }
+    }
+  };
+}
+
 async function writeStorageMapToCloud(storageMap, reason) {
-  if (!syncState.docRef || !syncState.user) {
+  if (!syncState.user) {
     throw new Error('Sign in on the Sync page before pushing progress to the cloud.');
   }
 
-  const payload = {
-    storage: storageMap,
-    version: 1,
-    updatedAtMs: Date.now(),
-    updatedAt: window.firebase.firestore.FieldValue.serverTimestamp(),
-    updatedBy: getCurrentDeviceLabel(),
-    updatedByEmail: syncState.user.email || '',
-    reason: reason || 'sync'
-  };
+  const payload = createCloudDocumentBody(storageMap, reason);
+  syncState.saveInFlight = fetch(buildCloudPatchUrl(), {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${await getCloudAuthToken()}`
+    },
+    body: JSON.stringify(payload.body)
+  });
 
-  syncState.saveInFlight = syncState.docRef.set(payload, { merge: true });
-  await syncState.saveInFlight;
-  syncState.lastCloudUpdatedAt = payload.updatedAtMs;
+  const response = await syncState.saveInFlight;
   syncState.saveInFlight = null;
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Cloud write failed (${response.status}): ${text.slice(0, 180)}`);
+  }
+
+  syncState.lastCloudUpdatedAt = payload.updatedAtMs;
   setSyncState('synced', 'Cloud sync complete.');
 }
 
 function scheduleCloudSave(reason) {
-  if (!syncState.enabled || !syncState.docRef) return;
+  if (!syncState.enabled || !syncState.user) return;
 
   if (syncState.saveTimer) clearTimeout(syncState.saveTimer);
   setSyncState('syncing', 'Saving progress to the cloud...');
@@ -528,53 +627,41 @@ async function handleRemoteStorage(docData, source) {
   }
 }
 
-function subscribeToLiveCloudUpdates() {
-  if (!syncState.docRef) return;
-  if (syncState.unsubscribeDoc) syncState.unsubscribeDoc();
+function stopCloudPolling() {
+  if (syncState.pollTimer) {
+    clearInterval(syncState.pollTimer);
+    syncState.pollTimer = null;
+  }
+}
 
-  syncState.unsubscribeDoc = syncState.docRef.onSnapshot(snapshot => {
-    if (!syncState.initialSyncComplete || !snapshot.exists) return;
-    const docData = snapshot.data() || {};
-    const remoteMap = extractRemoteStorageMap(docData);
-    const localMap = collectSyncableStorage();
-    const updatedAtMs = Number(docData.updatedAtMs || 0);
-
-    if (updatedAtMs && updatedAtMs <= syncState.lastCloudUpdatedAt && sameStorageMaps(localMap, remoteMap)) {
-      return;
-    }
-
-    syncState.lastCloudUpdatedAt = Math.max(syncState.lastCloudUpdatedAt, updatedAtMs);
-
-    if (!sameStorageMaps(localMap, remoteMap)) {
-      const merged = mergeStorageMaps(localMap, remoteMap);
-      const remoteNeedsFix = !sameStorageMaps(remoteMap, merged);
-
-      applySyncableStorage(merged, { replaceMissing: true });
-      if (remoteNeedsFix) {
-        writeStorageMapToCloud(merged, 'live-merge').catch(err => {
-          setSyncState('error', err.message || 'Cloud merge failed.');
-        });
-      }
-    }
-  }, err => {
-    setSyncState('error', err.message || 'Live cloud updates stopped.');
-  });
+function startCloudPolling() {
+  stopCloudPolling();
+  syncState.pollTimer = setInterval(() => {
+    if (!syncState.enabled || !syncState.user || document.hidden) return;
+    fetchCloudDocument()
+      .then(docData => {
+        if (!docData) return;
+        const updatedAtMs = extractRemoteUpdatedAtMs(docData);
+        if (updatedAtMs && updatedAtMs <= syncState.lastCloudUpdatedAt) return;
+        syncState.lastCloudUpdatedAt = Math.max(syncState.lastCloudUpdatedAt, updatedAtMs);
+        return handleRemoteStorage(docData, 'poll');
+      })
+      .catch(err => {
+        setSyncState('error', err.message || 'Cloud polling failed.');
+      });
+  }, 20000);
 }
 
 async function handleSignedInUser(user) {
   syncState.user = user;
   syncState.enabled = true;
   syncState.initialSyncComplete = false;
-  syncState.docRef = syncState.db
-    .collection(syncState.config.collectionName || 'studyPortalProfiles')
-    .doc(user.uid);
 
   setSyncState('connecting', 'Connected account found. Syncing progress...');
 
-  const snapshot = await syncState.docRef.get();
-  if (snapshot.exists) {
-    const docData = snapshot.data() || {};
-    syncState.lastCloudUpdatedAt = Number(docData.updatedAtMs || 0);
+  const docData = await fetchCloudDocument();
+  if (docData) {
+    syncState.lastCloudUpdatedAt = extractRemoteUpdatedAtMs(docData);
     await handleRemoteStorage(docData, 'initial');
   } else {
     const localMap = collectSyncableStorage();
@@ -586,20 +673,16 @@ async function handleSignedInUser(user) {
   }
 
   syncState.initialSyncComplete = true;
-  subscribeToLiveCloudUpdates();
+  startCloudPolling();
   broadcastSyncState();
 }
 
 async function handleSignedOutUser() {
   syncState.user = null;
-  syncState.docRef = null;
   syncState.enabled = false;
   syncState.initialSyncComplete = false;
   syncState.lastCloudUpdatedAt = 0;
-  if (syncState.unsubscribeDoc) {
-    syncState.unsubscribeDoc();
-    syncState.unsubscribeDoc = null;
-  }
+  stopCloudPolling();
   setSyncState('needs-auth', 'Sign in on the Sync page to share progress across devices.');
 }
 
@@ -623,10 +706,6 @@ async function initializeCloudSync() {
         : window.firebase.initializeApp(config.firebase);
 
       syncState.auth = window.firebase.auth(app);
-      syncState.db = window.firebase.firestore(app);
-      syncState.db.settings({
-        experimentalForceLongPolling: true
-      });
 
       await syncState.auth.setPersistence(window.firebase.auth.Auth.Persistence.LOCAL);
       syncState.auth.onAuthStateChanged(user => {
@@ -674,7 +753,7 @@ async function signOutStudyPortalCloud() {
 
 async function pushProgressToCloud() {
   await initializeCloudSync();
-  if (!syncState.enabled || !syncState.docRef) {
+  if (!syncState.enabled || !syncState.user) {
     throw new Error('Sign in first on the Sync page.');
   }
   if (syncState.saveTimer) {
@@ -686,17 +765,16 @@ async function pushProgressToCloud() {
 
 async function pullProgressFromCloud() {
   await initializeCloudSync();
-  if (!syncState.enabled || !syncState.docRef) {
+  if (!syncState.enabled || !syncState.user) {
     throw new Error('Sign in first on the Sync page.');
   }
   setSyncState('syncing', 'Pulling cloud progress...');
-  const snapshot = await syncState.docRef.get();
-  if (!snapshot.exists) {
+  const docData = await fetchCloudDocument();
+  if (!docData) {
     setSyncState('connected', 'Cloud account connected. No remote progress found.');
     return;
   }
-  const docData = snapshot.data() || {};
-  syncState.lastCloudUpdatedAt = Number(docData.updatedAtMs || 0);
+  syncState.lastCloudUpdatedAt = extractRemoteUpdatedAtMs(docData);
   await handleRemoteStorage(docData, 'manual-pull');
 }
 
