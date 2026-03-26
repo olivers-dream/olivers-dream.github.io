@@ -7,5 +7,6 @@ window.STUDY_PORTAL_CLOUD_CONFIG = {
     messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
     appId: 'YOUR_APP_ID'
   },
-  collectionName: 'studyPortalProfiles'
+  collectionName: 'studyPortalProfiles',
+  parentAccessPin: 'CHANGE_THIS_PIN'
 };

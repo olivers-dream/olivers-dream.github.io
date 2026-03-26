@@ -7,5 +7,6 @@ window.STUDY_PORTAL_CLOUD_CONFIG = {
     messagingSenderId: "523750490645",
     appId: "1:523750490645:web:2ff477b7cf58fceac4041c",
   },
-  collectionName: 'studyPortalProfiles'
+  collectionName: 'studyPortalProfiles',
+  parentAccessPin: '7482'
 };

@@ -40,59 +40,78 @@
       <a href="science/index.html">🔬 Science</a>
     </nav>
 
-    <section class="card">
-      <h3>Cloud Status</h3>
-      <div class="status-box" id="parentSyncStatus">Checking sync status...</div>
-      <p class="footer-note" id="parentSyncHint"></p>
+    <section class="card" id="parentLockCard">
+      <h3>Parent Access</h3>
+      <p class="footer-note">Enter your parent PIN to open the monitoring dashboard. This unlock lasts only for this browser tab.</p>
+      <div class="form-row">
+        <div>
+          <label for="parentPinInput">Parent PIN</label>
+          <input type="password" id="parentPinInput" placeholder="Enter parent PIN"/>
+        </div>
+      </div>
       <div class="action-row" style="margin-top:12px;">
-        <a href="sync.html" class="btn">Open Sync Page</a>
-        <button class="btn secondary" id="parentPullBtn">Pull Latest Now</button>
-        <button class="btn secondary" id="parentExportBtn">Export Backup</button>
+        <button class="btn" id="parentUnlockBtn">Unlock Parent View</button>
       </div>
+      <p class="footer-note" id="parentLockMessage"></p>
     </section>
 
-    <section class="grid">
-      <article class="card">
-        <h3>Total Chapters Done</h3>
-        <div class="kpi" id="overallChapters">0 / 76</div>
-        <p class="footer-note" id="overallPercent">0% complete</p>
-      </article>
-      <article class="card">
-        <h3>Total Study Hours</h3>
-        <div class="kpi" id="parentHours">0 hrs</div>
-        <p class="footer-note" id="parentEntries">0 log entries</p>
-      </article>
-      <article class="card">
-        <h3>Streak</h3>
-        <div class="kpi" id="parentStreak">0 days</div>
-        <p class="footer-note" id="parentLevel">Level: Beginner</p>
-      </article>
-      <article class="card">
-        <h3>Latest Study Day</h3>
-        <div class="kpi" id="latestDay">—</div>
-        <p class="footer-note" id="latestSubject">No activity yet</p>
-      </article>
-    </section>
+    <div id="parentProtectedContent" class="hidden">
+      <section class="card">
+        <h3>Cloud Status</h3>
+        <div class="status-box" id="parentSyncStatus">Checking sync status...</div>
+        <p class="footer-note" id="parentSyncHint"></p>
+        <div class="action-row" style="margin-top:12px;">
+          <a href="sync.html" class="btn">Open Sync Page</a>
+          <button class="btn secondary" id="parentPullBtn">Pull Latest Now</button>
+          <button class="btn secondary" id="parentExportBtn">Export Backup</button>
+          <button class="btn secondary" id="parentLockBtn">Lock Parent View</button>
+        </div>
+      </section>
 
-    <section class="card">
-      <h3>Subject Progress</h3>
-      <div class="grid" id="subjectGrid"></div>
-    </section>
+      <section class="grid">
+        <article class="card">
+          <h3>Total Chapters Done</h3>
+          <div class="kpi" id="overallChapters">0 / 76</div>
+          <p class="footer-note" id="overallPercent">0% complete</p>
+        </article>
+        <article class="card">
+          <h3>Total Study Hours</h3>
+          <div class="kpi" id="parentHours">0 hrs</div>
+          <p class="footer-note" id="parentEntries">0 log entries</p>
+        </article>
+        <article class="card">
+          <h3>Streak</h3>
+          <div class="kpi" id="parentStreak">0 days</div>
+          <p class="footer-note" id="parentLevel">Level: Beginner</p>
+        </article>
+        <article class="card">
+          <h3>Latest Study Day</h3>
+          <div class="kpi" id="latestDay">—</div>
+          <p class="footer-note" id="latestSubject">No activity yet</p>
+        </article>
+      </section>
 
-    <section class="card">
-      <h3>Recent Study Log</h3>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>Date</th><th>Subject</th><th>Hours</th><th>Notes</th><th>Time</th></tr>
-          </thead>
-          <tbody id="recentLogBody"></tbody>
-        </table>
-      </div>
-      <p class="footer-note" id="recentLogNote"></p>
-    </section>
+      <section class="card">
+        <h3>Subject Progress</h3>
+        <div class="grid" id="subjectGrid"></div>
+      </section>
+
+      <section class="card">
+        <h3>Recent Study Log</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Date</th><th>Subject</th><th>Hours</th><th>Notes</th><th>Time</th></tr>
+            </thead>
+            <tbody id="recentLogBody"></tbody>
+          </table>
+        </div>
+        <p class="footer-note" id="recentLogNote"></p>
+      </section>
+    </div>
   </main>
 
+  <script src="assets/cloud-config.js"></script>
   <script>
     window.STUDY_PORTAL_DISABLE_AUTO_CLOUD_INIT = true;
   </script>
@@ -109,7 +128,30 @@
       { key: 'fp', prefix: 'fp', total: 9, label: 'Footprints', icon: '👣' },
       { key: 'we', prefix: 'we', total: 9, label: 'Words & Expressions', icon: '✍️' }
     ];
+    const PARENT_UNLOCK_KEY = 'studyportal_parent_unlock_v1';
     let parentCloudReady = false;
+
+    function getParentPin() {
+      return String((window.STUDY_PORTAL_CLOUD_CONFIG && window.STUDY_PORTAL_CLOUD_CONFIG.parentAccessPin) || '').trim();
+    }
+
+    function isParentUnlocked() {
+      return sessionStorage.getItem(PARENT_UNLOCK_KEY) === 'yes';
+    }
+
+    function showParentAccess() {
+      document.getElementById('parentLockCard').classList.add('hidden');
+      document.getElementById('parentProtectedContent').classList.remove('hidden');
+      renderParentPage();
+    }
+
+    function showParentLock(message) {
+      document.getElementById('parentProtectedContent').classList.add('hidden');
+      document.getElementById('parentLockCard').classList.remove('hidden');
+      document.getElementById('parentLockMessage').textContent = message || '';
+      document.getElementById('parentPinInput').value = '';
+      document.getElementById('parentPinInput').focus();
+    }
 
     function renderParentStatus() {
       if (!parentCloudReady) {
@@ -200,6 +242,25 @@
       renderRecentLog();
     }
 
+    document.getElementById('parentUnlockBtn').addEventListener('click', () => {
+      const configuredPin = getParentPin();
+      const enteredPin = document.getElementById('parentPinInput').value.trim();
+
+      if (!configuredPin) {
+        showParentLock('Parent PIN is not configured yet. Set `parentAccessPin` in assets/cloud-config.js.');
+        return;
+      }
+
+      if (enteredPin !== configuredPin) {
+        showParentLock('Incorrect PIN. Try again.');
+        return;
+      }
+
+      sessionStorage.setItem(PARENT_UNLOCK_KEY, 'yes');
+      document.getElementById('parentLockMessage').textContent = '';
+      showParentAccess();
+    });
+
     document.getElementById('parentPullBtn').addEventListener('click', async () => {
       try {
         await studyPortalCloud.initialize();
@@ -215,7 +276,17 @@
       downloadProgressBackup();
     });
 
-    renderParentPage();
+    document.getElementById('parentLockBtn').addEventListener('click', () => {
+      sessionStorage.removeItem(PARENT_UNLOCK_KEY);
+      parentCloudReady = false;
+      showParentLock('Parent view locked.');
+    });
+
+    if (isParentUnlocked()) {
+      showParentAccess();
+    } else {
+      showParentLock('');
+    }
   </script>
 </body>
 </html>
