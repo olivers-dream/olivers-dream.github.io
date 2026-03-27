@@ -401,6 +401,9 @@
 
       wrap.dataset.zoomReady = 'true';
       wrap.classList.add('is-zoomable');
+      wrap.setAttribute('role', 'button');
+      wrap.setAttribute('tabindex', '0');
+      wrap.setAttribute('aria-label', 'Open enlarged mind map for ' + pageTitle);
 
       let zoomPill = wrap.querySelector('.mind-map-zoom-pill');
       if (!zoomPill) {
@@ -425,6 +428,19 @@
       zoomPill.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
+        openViewer();
+      });
+
+      wrap.addEventListener('click', event => {
+        if (event.target === zoomPill || event.target.closest('.mind-map-zoom-pill')) return;
+        if (event.target.closest('a, input, textarea, select, label, button')) return;
+        openViewer();
+      });
+
+      wrap.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        if (event.target === zoomPill || event.target.closest('.mind-map-zoom-pill')) return;
+        event.preventDefault();
         openViewer();
       });
     });

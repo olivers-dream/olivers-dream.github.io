@@ -1154,6 +1154,7 @@ tr.today-row td {
 
 .mind-map-wrap.is-zoomable {
   position: relative;
+  cursor: zoom-in;
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
