@@ -722,7 +722,6 @@ tr.today-row td {
   border: 1px solid transparent;
 }
 
-.tag.progress { background: rgba(6,182,212,0.14); color: #67e8f9; border-color: rgba(34,211,238,0.24); }
 .tag.easy { background: rgba(16,185,129,0.15); color: #34d399; }
 .tag.med  { background: rgba(245,158,11,0.15); color: #fbbf24; border-color: rgba(251,191,36,0.18); }
 .tag.hard { background: rgba(239,68,68,0.15);  color: #f87171; border-color: rgba(248,113,113,0.18); }
@@ -943,7 +942,7 @@ tr.today-row td {
 }
 
 .chapter-sticky-status {
-  color: #67e8f9;
+  color: var(--page-accent, #c084fc);
   text-align: right;
 }
 
