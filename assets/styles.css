@@ -775,22 +775,28 @@ tr.today-row td {
 }
 
 .chapter-overview-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
   gap: 14px;
   margin-bottom: 14px;
 }
 
 .chapter-overview-head > :first-child {
-  flex: 1 1 auto;
   min-width: 0;
 }
 
 .chapter-overview-head .tag {
-  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: end;
+  min-width: max-content;
+  max-width: none;
   white-space: nowrap;
-  align-self: flex-start;
+  align-self: start;
+  writing-mode: horizontal-tb;
+  overflow: visible;
 }
 
 .chapter-overview-grid {
