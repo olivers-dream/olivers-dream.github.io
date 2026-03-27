@@ -1202,6 +1202,10 @@ tr.today-row td {
   backdrop-filter: blur(14px);
 }
 
+.mind-map-lightbox[hidden] {
+  display: none !important;
+}
+
 .mind-map-lightbox__dialog {
   width: min(1500px, 100%);
   max-height: min(94vh, 1100px);
