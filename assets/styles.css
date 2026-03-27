@@ -644,6 +644,30 @@ a:hover { color: #22d3ee; }
   white-space: pre-wrap;
 }
 
+.weekly-plan-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.weekly-plan-stat strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #f8fafc;
+}
+
+.weekly-plan-stat .value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.weekly-plan-remark {
+  margin-top: 12px;
+  white-space: pre-wrap;
+}
+
 /* ---- Form Elements ---- */
 input, select, textarea {
   width: 100%;

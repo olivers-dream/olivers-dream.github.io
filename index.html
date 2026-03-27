@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Oliver's Dream</title>
-  <link rel="stylesheet" href="assets/styles.css?v=0308fb752b" />
+  <link rel="stylesheet" href="assets/styles.css?v=76a1a64a70" />
 </head>
 <body>
 
@@ -178,6 +178,33 @@
           <a href="sync.html" class="btn">Open Sync</a>
         </div>
       </article>
+    </section>
+
+    <section class="card weekly-plan-card stagger">
+      <div class="chapter-overview-head">
+        <div>
+          <p class="enhancer-eyebrow">This Week&apos;s Plan</p>
+          <h3>Parent Targets</h3>
+        </div>
+        <span class="tag easy" id="childPlanStatus">No plan yet</span>
+      </div>
+      <p class="footer-note">These goals are read-only on the child side and update from the saved weekly parent plan.</p>
+      <div class="weekly-plan-meta">
+        <div class="status-box weekly-plan-stat">
+          <strong>Hours target</strong>
+          <div class="value" id="childPlanHours">—</div>
+        </div>
+        <div class="status-box weekly-plan-stat">
+          <strong>Chapter target</strong>
+          <div class="value" id="childPlanChapters">—</div>
+        </div>
+        <div class="status-box weekly-plan-stat">
+          <strong>Study every</strong>
+          <div class="value" id="childPlanInactivity">—</div>
+        </div>
+      </div>
+      <div class="status-box weekly-plan-remark" id="childPlanRemark">No weekly note yet.</div>
+      <p class="footer-note" id="childPlanHint">If the parent updated this recently, use Sync to pull the latest cloud data.</p>
     </section>
 
     <section class="card portal-search-card stagger">
@@ -423,7 +450,7 @@
 
   </main>
 
-  <script src="assets/app.js?v=d549f7c373"></script>
+  <script src="assets/app.js?v=a3cfe84bb3"></script>
   <script src="assets/search-index.js?v=b3661bc1fb"></script>
   <script src="assets/search-tools.js?v=e35f5c785e"></script>
   <script>
@@ -591,6 +618,33 @@
     sunday.setDate(monday.getDate() + 6);
     var fmtDate = function(d) { return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }); };
     document.getElementById('weekLabel').textContent = fmtDate(monday) + ' \u2013 ' + fmtDate(sunday);
+
+    function renderChildWeeklyPlan() {
+      var goals = getParentGoals();
+      var weekPlan = getCurrentWeekParentPlan();
+      var hasPlan = !!((weekPlan.hoursTarget || 0) > 0 || (weekPlan.chaptersTarget || 0) > 0 || (weekPlan.remark || '').trim());
+      var planStatus = document.getElementById('childPlanStatus');
+
+      document.getElementById('childPlanHours').textContent =
+        (weekPlan.hoursTarget || 0) > 0 ? (weekPlan.hoursTarget + ' hrs') : 'Not set';
+      document.getElementById('childPlanChapters').textContent =
+        (weekPlan.chaptersTarget || 0) > 0 ? (weekPlan.chaptersTarget + ' chapters') : 'Not set';
+      document.getElementById('childPlanInactivity').textContent =
+        (goals.inactivityThresholdDays || 3) + ' day' + ((goals.inactivityThresholdDays || 3) === 1 ? '' : 's');
+      document.getElementById('childPlanRemark').textContent =
+        (weekPlan.remark || '').trim() || 'No weekly note from parent yet.';
+      document.getElementById('childPlanHint').textContent = hasPlan
+        ? ('Plan week: ' + fmtDate(monday) + ' – ' + fmtDate(sunday))
+        : 'If the parent updated this recently, use Sync to pull the latest cloud data.';
+
+      planStatus.className = 'tag ' + (hasPlan ? 'easy' : 'med');
+      planStatus.textContent = hasPlan ? 'Plan active' : 'No plan yet';
+    }
+    renderChildWeeklyPlan();
+    window.addEventListener('studyportal:data-changed', renderChildWeeklyPlan);
+    window.addEventListener('storage', function(event) {
+      if (event.key === 'study_portal_parent_goals_v1') renderChildWeeklyPlan();
+    });
 
     // Weekly quests — data-driven, progress stored in localStorage
     var QUESTS = [

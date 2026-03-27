@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>✏️ Tracker — Oliver's Dream</title>
-  <link rel="stylesheet" href="assets/styles.css?v=0308fb752b"/>
+  <link rel="stylesheet" href="assets/styles.css?v=76a1a64a70"/>
 </head>
 <body>
   <nav class="bottom-nav" aria-label="Mobile navigation">
@@ -43,6 +43,33 @@
       <a href="footprints/index.html">👣 Footprints</a>
       <a href="words_expressions/index.html">✍️ Words &amp; Expressions</a>
     </nav>
+
+    <section class="card weekly-plan-card" style="margin-bottom:16px;">
+      <div class="chapter-overview-head">
+        <div>
+          <p class="enhancer-eyebrow">This Week&apos;s Plan</p>
+          <h3>Parent Targets</h3>
+        </div>
+        <span class="tag easy" id="childPlanStatus">No plan yet</span>
+      </div>
+      <p class="footer-note">Your parent can set goals and a note for the week. This view is read-only on the child side.</p>
+      <div class="weekly-plan-meta">
+        <div class="status-box weekly-plan-stat">
+          <strong>Hours target</strong>
+          <div class="value" id="childPlanHours">—</div>
+        </div>
+        <div class="status-box weekly-plan-stat">
+          <strong>Chapter target</strong>
+          <div class="value" id="childPlanChapters">—</div>
+        </div>
+        <div class="status-box weekly-plan-stat">
+          <strong>Study every</strong>
+          <div class="value" id="childPlanInactivity">—</div>
+        </div>
+      </div>
+      <div class="status-box weekly-plan-remark" id="childPlanRemark">No weekly note yet.</div>
+      <p class="footer-note" id="childPlanHint">If the parent updated this recently, use Sync to pull the latest cloud data.</p>
+    </section>
 
     <section class="card" style="margin-bottom:16px;">
       <h3>📝 Log Today's Study</h3>
@@ -151,7 +178,7 @@
     </section>
   </main>
 
-  <script src="assets/app.js?v=d549f7c373"></script>
+  <script src="assets/app.js?v=a3cfe84bb3"></script>
   <script>
     const focusState = {
       timerId: null,
@@ -171,6 +198,46 @@
     const xpData = getXPData();
     document.getElementById('streakVal').textContent = xpData.streak;
     document.getElementById('xpVal').textContent = xpData.xp;
+
+    function getTrackerWeekWindow() {
+      const now = new Date();
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      return {
+        monday,
+        sunday
+      };
+    }
+
+    function trackerShortDate(d) {
+      return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+    }
+
+    function renderChildWeeklyPlan() {
+      const goals = getParentGoals();
+      const weekPlan = getCurrentWeekParentPlan();
+      const hasPlan = !!((weekPlan.hoursTarget || 0) > 0 || (weekPlan.chaptersTarget || 0) > 0 || String(weekPlan.remark || '').trim());
+      const weekWindow = getTrackerWeekWindow();
+      const days = goals.inactivityThresholdDays || 3;
+      const statusEl = document.getElementById('childPlanStatus');
+
+      document.getElementById('childPlanHours').textContent =
+        (weekPlan.hoursTarget || 0) > 0 ? (weekPlan.hoursTarget + ' hrs') : 'Not set';
+      document.getElementById('childPlanChapters').textContent =
+        (weekPlan.chaptersTarget || 0) > 0 ? (weekPlan.chaptersTarget + ' chapters') : 'Not set';
+      document.getElementById('childPlanInactivity').textContent =
+        days + ' day' + (days === 1 ? '' : 's');
+      document.getElementById('childPlanRemark').textContent =
+        String(weekPlan.remark || '').trim() || 'No weekly note from parent yet.';
+      document.getElementById('childPlanHint').textContent = hasPlan
+        ? ('Plan week: ' + trackerShortDate(weekWindow.monday) + ' – ' + trackerShortDate(weekWindow.sunday))
+        : 'If the parent updated this recently, use Sync to pull the latest cloud data.';
+
+      statusEl.className = 'tag ' + (hasPlan ? 'easy' : 'med');
+      statusEl.textContent = hasPlan ? 'Plan active' : 'No plan yet';
+    }
 
     function formatCountdown(totalSeconds) {
       const minutes = Math.floor(totalSeconds / 60);
@@ -341,6 +408,11 @@
     renderLog();
     renderFocusSessions();
     resetFocusTimer('Pick a duration and press Start Focus.');
+    renderChildWeeklyPlan();
+    window.addEventListener('studyportal:data-changed', renderChildWeeklyPlan);
+    window.addEventListener('storage', event => {
+      if (event.key === 'study_portal_parent_goals_v1') renderChildWeeklyPlan();
+    });
   </script>
 </body>
 </html>

@@ -1227,6 +1227,10 @@ function saveParentGoalForWeek(weekKey, updates) {
   return goals;
 }
 
+function getCurrentWeekParentPlan() {
+  return getParentGoalForWeek(getWeekKey());
+}
+
 function getChapterMetaRecord(chapterKey) {
   const meta = getChapterMeta();
   return (meta && typeof meta[chapterKey] === 'object' && meta[chapterKey]) ? meta[chapterKey] : {};
@@ -1573,7 +1577,9 @@ window.setChapterStatus = setChapterStatus;
 window.saveChapterQuizResult = saveChapterQuizResult;
 window.getParentGoals = getParentGoals;
 window.getParentGoalForWeek = getParentGoalForWeek;
+window.getCurrentWeekParentPlan = getCurrentWeekParentPlan;
 window.saveParentGoalForWeek = saveParentGoalForWeek;
+window.getWeekKey = getWeekKey;
 window.getFocusSessions = getFocusSessions;
 window.addFocusSession = addFocusSession;
 window.getCurrentCloudParentGoals = getCurrentCloudParentGoals;
