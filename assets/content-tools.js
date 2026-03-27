@@ -71,7 +71,7 @@
     if (status === 'mastered') return 'easy';
     if (status === 'need_revision') return 'med';
     if (status === 'confusing') return 'hard';
-    return 'med';
+    return 'progress';
   }
 
   function getSummarySection() {
