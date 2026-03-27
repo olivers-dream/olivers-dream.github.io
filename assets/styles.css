@@ -942,7 +942,7 @@ tr.today-row td {
 }
 
 .chapter-sticky-status {
-  color: var(--page-accent, #c084fc);
+  color: #67e8f9;
   text-align: right;
 }
 
